@@ -16,6 +16,7 @@ anyhow = { version = "1.0.100", features = ["backtrace"] }
 axum = { version = "0.8.6", features = ["http2"] }
 chrono = "0.4.42"
 clap = { version = "4.5.23", features = ["env", "derive"] }
+dotenvy = "0.15.7"
 opentelemetry = "0.22.0"
 opentelemetry-otlp = { version = "0.15.0", features = ["http-proto", "reqwest-client"] }
 opentelemetry_sdk = { version = "0.22.1", features = ["rt-tokio"] }

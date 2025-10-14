@@ -1,3 +1,5 @@
+use std::env;
+
 use bunnychess::config::{ApiConfig, TracingConfig};
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
@@ -6,6 +8,20 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let app_env = match env::var("APP_ENV") {
+        Ok(v) if v.trim() == "dev" => AppEnv::Dev,
+        _ => AppEnv::Prod,
+    };
+
+    println!("Running in {app_env} mode");
+
+    if app_env == AppEnv::Dev {
+        match dotenvy::dotenv() {
+            Ok(path) => println!(".env read successfully from {}", path.display()),
+            Err(e) => panic!("Could not load .env file: {e}"),
+        };
+    }
+
     let ApiConfig {
         server: _,
         database: _,
@@ -48,4 +64,19 @@ fn init_tracing(tr: Option<TracingConfig>) -> anyhow::Result<()> {
         .with(otlp_tracer)
         .try_init()?;
     Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum AppEnv {
+    Dev,
+    Prod,
+}
+
+impl core::fmt::Display for AppEnv {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Dev => write!(f, "dev"),
+            Self::Prod => write!(f, "prod"),
+        }
+    }
 }
