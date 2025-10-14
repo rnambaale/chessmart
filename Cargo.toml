@@ -3,4 +3,30 @@ name = "bunnychess-rs"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "bunny-chess"
+path = "src/bin/main.rs"
+
+[lib]
+name = "bunnychess"
+path = "src/lib.rs"
+
 [dependencies]
+anyhow = { version = "1.0.100", features = ["backtrace"] }
+axum = { version = "0.8.6", features = ["http2"] }
+chrono = "0.4.42"
+clap = { version = "4.5.23", features = ["env", "derive"] }
+opentelemetry = "0.22.0"
+opentelemetry-otlp = { version = "0.15.0", features = ["http-proto", "reqwest-client"] }
+opentelemetry_sdk = { version = "0.22.1", features = ["rt-tokio"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.17"
+tokio = { version = "1.47.1", features = ["full"]}
+tower-http = { version = "0.6.6", features = ["cors", "fs", "set-header"] }
+tracing = "0.1.41"
+tracing-opentelemetry = "0.23.0"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
+utoipa = { version = "5.4.0", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+uuid = "1.18.1"
