@@ -9,8 +9,8 @@ use tracing::{event, Level};
 
 #[derive(Error, Debug)]
 pub enum BunnyChessApiError {
-    // #[error("DB Error {0}")]
-    // Db(#[from] sqlx::Error),
+    #[error("DB Error {0}")]
+    Db(#[from] sqlx::Error),
 
     #[error("Invalid amount: {0}")]
     InvalidAmount(String),
