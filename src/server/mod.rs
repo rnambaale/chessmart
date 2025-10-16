@@ -9,9 +9,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 pub mod state;
 
-use crate::{ routes::authentication::{
-    post_register, RegisterRequestDto, RegisterResponseDto,
-}, server::state::AppState};
+use crate::{ dtos::{request::RegisterRequestDto, response::RegisterResponseDto}, routes::authentication::post_register, server::state::AppState};
 
 pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 

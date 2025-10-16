@@ -2,25 +2,9 @@ use axum::{
     extract::State, Json
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
 use tracing::{info, instrument, warn};
-use utoipa::ToSchema;
 
-use crate::{error::{AppResponseError, BunnyChessApiError}, server::state::AppState, services};
-
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct RegisterRequestDto {
-    pub email: String,
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Default, ToSchema)]
-pub struct RegisterResponseDto {
-    pub id: String,
-    pub email: String,
-    pub created_at: String,
-}
+use crate::{dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::{LoginResponseDto, RegisterResponseDto}}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, services};
 
 #[utoipa::path(
     post,
@@ -53,4 +37,33 @@ pub async fn post_register(
             Err(e)
         }
     }
+}
+
+#[utoipa::path(
+    post,
+    request_body = LoginRequestDto,
+    path = "/auth/login",
+    responses(
+        (status = 200, description = "Success login user", body = [LoginResponseDto]),
+        (status = 400, description = "Invalid data input", body = [AppResponseError]),
+        (status = 404, description = "User not found", body = [AppResponseError]),
+        (status = 500, description = "Internal server error", body = [AppResponseError])
+    )
+)]
+pub async fn login(
+  State(state): State<AppState>,
+  Json(req): Json<LoginRequestDto>,
+) -> Result<Json<LoginResponseDto>, BunnyChessApiError> {
+    todo!();
+    // info!("Login user with request: {req:?}.");
+    // match service::authentication::login(&state, &req).await {
+    //     Ok(resp) => {
+    //         info!("Success login user_id: {resp:?}.");
+    //         Ok(Json(resp))
+    //     }
+    //     Err(e) => {
+    //         warn!("Unsuccessfully login user error: {e:?}.");
+    //         Err(e)
+    //     }
+    // }
 }

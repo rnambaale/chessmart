@@ -1,7 +1,7 @@
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{database::{self, postgres::PostgresDB, user::User, Database}, error::BunnyChessApiError, routes::authentication::RegisterRequestDto, server::state::AppState, utils};
+use crate::{database::{self, postgres::PostgresDB, user::User, Database}, dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, error::BunnyChessApiError, server::state::AppState, utils};
 
 pub async fn register(state: AppState, req: &RegisterRequestDto) -> Result<Uuid, BunnyChessApiError> {
     info!("Register a new user request: {req:?}.");
@@ -60,3 +60,14 @@ pub async fn check_unique_email(
     Ok(true)
 }
 
+pub async fn login(state: &AppState, req: LoginRequestDto) -> Result<LoginResponseDto, BunnyChessApiError> {
+    info!("User login request :{req:?}.");
+
+    let mut tx = state.db.begin_tx().await?;
+    let user = database::user::get_by_email(&mut tx, &req.email).await?;
+    utils::password::verify(req.password.clone(), user.password.clone()).await?;
+
+    // let key = LoginKey { user_id: user.id };
+    tx.commit().await?;
+    todo!();
+}
