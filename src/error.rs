@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use tracing::{event, Level};
@@ -45,5 +46,81 @@ impl IntoResponse for BunnyChessApiError {
 impl From<argon2::password_hash::Error> for BunnyChessApiError {
   fn from(value: argon2::password_hash::Error) -> Self {
     BunnyChessApiError::HashError(value.to_string())
+  }
+}
+
+impl BunnyChessApiError {
+  pub fn response(self) -> (StatusCode, AppResponseError) {
+    use BunnyChessApiError::*;
+    let message = self.to_string();
+
+
+    let (kind, code, details, status_code) = match self {
+      Db(_err) => (
+        "DB_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      UserAlreadyExists => (
+        format!("USER_ALREADY_EXISTS_ERROR"),
+        None,
+        vec![],
+        StatusCode::CONFLICT,
+      ),
+      InvalidInputError(_err) => (
+        "INVALID_INPUT_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::BAD_REQUEST,
+      ),
+      SpawnTaskError(_err) => (
+        "SPAWN_TASK_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      InvalidUuid(_err) => (
+        "UUID_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      HashError(_err) => (
+        "HASH_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+    };
+
+    (
+      status_code,
+      AppResponseError::new(kind, message, code, details),
+    )
+  }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, utoipa::ToSchema)]
+pub struct AppResponseError {
+  pub kind: String,
+  pub error_message: String,
+  pub code: Option<i32>,
+  pub details: Vec<(String, String)>,
+}
+
+impl AppResponseError {
+  pub fn new(
+    kind: impl Into<String>,
+    message: impl Into<String>,
+    code: Option<i32>,
+    details: Vec<(String, String)>,
+  ) -> Self {
+    Self {
+      kind: kind.into(),
+      error_message: message.into(),
+      code,
+      details,
+    }
   }
 }

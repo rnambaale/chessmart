@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tracing::{info, instrument, warn};
 use utoipa::ToSchema;
 
-use crate::{error::BunnyChessApiError, server::state::AppState, services};
+use crate::{error::{AppResponseError, BunnyChessApiError}, server::state::AppState, services};
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct RegisterRequestDto {
@@ -27,7 +27,9 @@ pub struct RegisterResponseDto {
     path = "/auth/register",
     request_body = RegisterRequestDto,
     responses(
-        (status = 200, description = "post register", body = [RegisterResponseDto])
+        (status = 200, description = "post register", body = [RegisterResponseDto]),
+        (status = 400, description = "Invalid data input", body = [AppResponseError]),
+        (status = 500, description = "Internal server error", body = [AppResponseError])
     ),
 )]
 #[instrument(name = "post_register", skip(state), err)]
@@ -47,7 +49,7 @@ pub async fn post_register(
             Ok(Json(resp))
         }
         Err(e) => {
-            warn!("Unsuccessfully register user: {e:?}");
+            warn!("Error encountered while registering user: {e:?}");
             Err(e)
         }
     }
