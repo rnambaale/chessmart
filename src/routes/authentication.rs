@@ -1,12 +1,12 @@
 use axum::{
-    Json,
+    extract::State, Json
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
+use tracing::{info, instrument, warn};
 use utoipa::ToSchema;
 
-use crate::error::BunnyChessApiError;
+use crate::{error::BunnyChessApiError, server::state::AppState, services};
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct RegisterRequestDto {
@@ -30,18 +30,25 @@ pub struct RegisterResponseDto {
         (status = 200, description = "post register", body = [RegisterResponseDto])
     ),
 )]
-#[instrument(name = "post_register", err)]
+#[instrument(name = "post_register", skip(state), err)]
 pub async fn post_register(
-    Json(register_request): Json<RegisterRequestDto>,
+    State(state): State<AppState>,
+    Json(req): Json<RegisterRequestDto>,
 ) -> Result<Json<RegisterResponseDto>, BunnyChessApiError> {
-
-    // TODO: Perform the actual registration
-
-    let now = Utc::now().timestamp() as u64;
-
-    Ok(Json(RegisterResponseDto {
-        id: String::from("111"),
-        email: register_request.email,
-        created_at: now.to_string()
-    }))
+    match services::authentication::register(state, &req).await {
+        Ok(user_id) => {
+            info!("Successfully register user: {user_id}");
+            let now = Utc::now().timestamp() as u64;
+            let resp = RegisterResponseDto {
+                id: user_id.to_string(),
+                email: req.email,
+                created_at: now.to_string()
+            };
+            Ok(Json(resp))
+        }
+        Err(e) => {
+            warn!("Unsuccessfully register user: {e:?}");
+            Err(e)
+        }
+    }
 }

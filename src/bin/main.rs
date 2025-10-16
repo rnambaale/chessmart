@@ -1,6 +1,6 @@
 use std::env;
 
-use bunnychess::config::{ApiConfig, TracingConfig};
+use bunnychess::{config::{ApiConfig, TracingConfig}, server::state::AppStateBuilder};
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::trace::Sampler;
@@ -23,14 +23,21 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let ApiConfig {
-        server: _,
-        database: _,
+        server,
+        database,
         tracing,
     } = ApiConfig::read_config_with_defaults();
 
     init_tracing(tracing.clone())?;
 
-    bunnychess::server::run_server().await
+    let state = AppStateBuilder::new()
+        .with_server(Some(server))
+        .with_db(Some(database))
+        .with_tracing(tracing)
+        .build()
+        .await?;
+
+    bunnychess::server::run_server(state).await
 }
 
 fn init_tracing(tr: Option<TracingConfig>) -> anyhow::Result<()> {

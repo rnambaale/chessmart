@@ -35,6 +35,9 @@ pub enum BunnyChessApiError {
 
     #[error("PrivateKey in keyset not found")]
     PrivateKeyNotFound,
+
+    #[error("User already exists")]
+    UserAlreadyExists,
 }
 
 impl IntoResponse for BunnyChessApiError {

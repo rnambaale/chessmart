@@ -7,12 +7,13 @@ use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+pub mod state;
 
-use crate::routes::authentication::{
+use crate::{ routes::authentication::{
     post_register, RegisterRequestDto, RegisterResponseDto,
-};
+}, server::state::AppState};
 
-pub async fn run_server() -> anyhow::Result<()> {
+pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 
     info!("listening on: 3000");
 
@@ -20,7 +21,7 @@ pub async fn run_server() -> anyhow::Result<()> {
 
     axum::serve(
         listener,
-        app().layer(
+        app(state).layer(
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_headers(Any)
@@ -44,11 +45,12 @@ pub async fn run_server() -> anyhow::Result<()> {
 )]
 struct ApiDoc;
 
-fn app() -> Router {
+fn app(state: AppState) -> Router {
     let router = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // POST auth/login
-        .route("/auth/register", post(post_register));
+        .route("/auth/register", post(post_register))
+        .with_state(state);
 
     router
 }

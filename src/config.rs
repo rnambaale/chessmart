@@ -80,3 +80,18 @@ impl ApiConfig {
         opts.into()
     }
 }
+
+impl ApiConfig {
+    #[allow(clippy::too_many_arguments)]
+    pub const fn new(
+        server: ServerConfig,
+        database: DatabaseConfig,
+        tracing: Option<TracingConfig>,
+    ) -> Self {
+        Self {
+            server,
+            database,
+            tracing,
+        }
+    }
+}

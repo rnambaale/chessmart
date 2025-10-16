@@ -1,4 +1,6 @@
 pub mod config;
 pub mod error;
+pub mod database;
+pub mod routes;
 pub mod server;
-mod routes;
+pub mod services;
