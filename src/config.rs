@@ -12,6 +12,9 @@ pub struct Opts {
 
     #[clap(flatten)]
     pub tracing: Option<TracingConfig>,
+
+    #[clap(flatten)]
+    pub redis: RedisConfig,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -30,6 +33,49 @@ impl Default for DatabaseConfig {
             max_connections: 5,
         }
     }
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct RedisConfig {
+    #[clap(long, env = "REDIS_USERNAME")]
+    pub username: String,
+
+    #[clap(long, env = "REDIS_PASSWORD")]
+    pub password: String,
+
+    #[clap(long, env = "REDIS_PORT")]
+    pub port: u16,
+
+    #[clap(long, env = "REDIS_HOST")]
+    pub host: String,
+
+    #[clap(long, env = "REDIS_DATABASE_NAME")]
+    pub database_name: String,
+}
+
+impl Default for RedisConfig {
+    fn default() -> Self {
+        Self {
+            username: "".to_owned(),
+            password: "".to_owned(),
+            port: 6379,
+            host: "127.0.0.1".to_owned(),
+            database_name: "".to_owned(),
+        }
+    }
+}
+
+impl RedisConfig {
+  pub fn get_url(&self) -> String {
+    format!(
+      "redis://{username}:{password}@{host}:{port}/{database_name}",
+      username = self.username,
+      password = self.password,
+      host = self.host,
+      port = self.port,
+      database_name = self.database_name
+    )
+  }
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -61,6 +107,7 @@ pub struct ApiConfig {
     pub server: ServerConfig,
     pub tracing: Option<TracingConfig>,
     pub database: DatabaseConfig,
+    pub redis: RedisConfig,
 }
 
 impl From<Opts> for ApiConfig {
@@ -69,6 +116,7 @@ impl From<Opts> for ApiConfig {
             server: opts.server,
             tracing: opts.tracing,
             database: opts.database,
+            redis: opts.redis,
         }
     }
 }
@@ -87,11 +135,13 @@ impl ApiConfig {
         server: ServerConfig,
         database: DatabaseConfig,
         tracing: Option<TracingConfig>,
+        redis: RedisConfig,
     ) -> Self {
         Self {
             server,
             database,
             tracing,
+            redis,
         }
     }
 }

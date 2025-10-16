@@ -1,19 +1,21 @@
-use crate::{config::{ApiConfig, DatabaseConfig, ServerConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError};
+use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
 
 #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {
     pub db: DB,
     pub config: ApiConfig,
+    pub redis: RedisClient,
 }
 
 impl<DB> AppState<DB>
 where
     DB: Database,
 {
-    pub fn new(db: DB, config: ApiConfig) -> Self {
+    pub fn new(db: DB, config: ApiConfig, redis: RedisClient) -> Self {
         Self {
             db,
             config,
+            redis
         }
     }
 }
@@ -23,6 +25,7 @@ pub struct AppStateBuilder {
     db_config: Option<DatabaseConfig>,
     server_config: Option<ServerConfig>,
     tracing_config: Option<TracingConfig>,
+    redis_config: Option<RedisConfig>,
 }
 
 impl AppStateBuilder {
@@ -31,11 +34,17 @@ impl AppStateBuilder {
             db_config: None,
             server_config: None,
             tracing_config: None,
+            redis_config: None,
         }
     }
 
     pub fn with_db(mut self, db_config: Option<DatabaseConfig>) -> Self {
         self.db_config = db_config;
+        self
+    }
+
+    pub fn with_redis(mut self, redis_config: Option<RedisConfig>) -> Self {
+        self.redis_config = redis_config;
         self
     }
 
@@ -54,13 +63,18 @@ impl AppStateBuilder {
         let db = PostgresDB::new(&db_config).await?;
         db.migrate().await;
 
+        let redis_config = self.redis_config.expect("redis-config not set");
+        let redis = RedisDB::new(&redis_config).await?;
+
         Ok(AppState::new(
             db,
             ApiConfig::new(
                 self.server_config.unwrap_or_default(),
                 db_config,
                 self.tracing_config,
+                redis_config,
             ),
+            redis
         ))
     }
 }

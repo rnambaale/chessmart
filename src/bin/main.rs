@@ -26,6 +26,7 @@ async fn main() -> anyhow::Result<()> {
         server,
         database,
         tracing,
+        redis
     } = ApiConfig::read_config_with_defaults();
 
     init_tracing(tracing.clone())?;
@@ -34,6 +35,7 @@ async fn main() -> anyhow::Result<()> {
         .with_server(Some(server))
         .with_db(Some(database))
         .with_tracing(tracing)
+        .with_redis(Some(redis))
         .build()
         .await?;
 

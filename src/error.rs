@@ -14,6 +14,9 @@ pub enum BunnyChessApiError {
     #[error("DB Error {0}")]
     Db(#[from] sqlx::Error),
 
+    #[error(transparent)]
+    RedisError(#[from] redis::RedisError),
+
     #[error("{0}")]
     HashError(String),
 
@@ -58,6 +61,12 @@ impl BunnyChessApiError {
     let (kind, code, details, status_code) = match self {
       Db(_err) => (
         "DB_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      RedisError(_err) => (
+        "REDIS_ERROR".to_string(),
         None,
         vec![],
         StatusCode::INTERNAL_SERVER_ERROR,

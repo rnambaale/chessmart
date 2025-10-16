@@ -1,7 +1,8 @@
 pub mod config;
-pub mod error;
 pub mod database;
+pub mod error;
 pub mod dtos;
+pub mod redis;
 pub mod routes;
 pub mod server;
 pub mod services;
