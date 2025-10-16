@@ -1,7 +1,7 @@
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{database::{self, postgres::PostgresDB, user::User, Database}, error::BunnyChessApiError, routes::authentication::RegisterRequestDto, server::state::AppState};
+use crate::{database::{self, postgres::PostgresDB, user::User, Database}, error::BunnyChessApiError, routes::authentication::RegisterRequestDto, server::state::AppState, utils};
 
 pub async fn register(state: AppState, req: &RegisterRequestDto) -> Result<Uuid, BunnyChessApiError> {
     info!("Register a new user request: {req:?}.");
@@ -14,7 +14,7 @@ pub async fn register(state: AppState, req: &RegisterRequestDto) -> Result<Uuid,
         id: user_id,
         email: req.email.to_string(),
         username: req.username.to_string(),
-        password: req.password.to_string()
+        password: utils::password::hash(req.password.to_string()).await?
     };
 
     database::user::save(&mut tx, &user).await?;
