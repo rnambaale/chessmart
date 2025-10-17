@@ -2,7 +2,7 @@ use chrono::Utc;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{database::{self, postgres::PostgresDB, user::User, Database}, dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, error::BunnyChessApiError, server::state::AppState, services, utils};
+use crate::{database::{self, postgres::PostgresDB, user::User, Database}, dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, error::BunnyChessApiError, server::state::AppState, services::{self, redis::SessionKey}, utils};
 
 pub async fn register(state: AppState, req: &RegisterRequestDto) -> Result<Uuid, BunnyChessApiError> {
     info!("Register a new user request: {req:?}.");
@@ -79,4 +79,11 @@ pub async fn login(state: &AppState, req: &LoginRequestDto) -> Result<LoginRespo
     let session_id = services::session::set(&state.redis, user.id).await?;
     let resp = services::token::generate_tokens(user.id, session_id)?;
     Ok(resp)
+}
+
+pub async fn logout(state: &AppState, user_id: Uuid) -> Result<(), BunnyChessApiError> {
+    info!("Logout user id: {user_id}");
+    let key = SessionKey { user_id };
+    services::redis::del(&state.redis, &key).await?;
+    Ok(())
 }

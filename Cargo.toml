@@ -16,6 +16,7 @@ anyhow = { version = "1.0.94", features = ["backtrace"] }
 argon2 = "0.5.3"
 async-trait = "0.1.80"
 axum = { version = "0.7.9", features = ["http2"] }
+axum-extra = { version = "0.10.3", features = ["typed-header"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 clap = { version = "4.5.23", features = ["env", "derive"] }
 dotenvy = "0.15.7"
@@ -38,6 +39,6 @@ tower-http = { version = "0.6.6", features = ["cors", "fs", "set-header"] }
 tracing = "0.1.41"
 tracing-opentelemetry = "0.23.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
-utoipa = { version = "5.2.0", features = ["axum_extras"] }
+utoipa = { version = "5.2.0", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "8.0.3", features = ["axum"] }
 uuid = { version = "1", features = ["serde", "v4"] }

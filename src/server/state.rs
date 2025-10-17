@@ -15,7 +15,7 @@ where
         Self {
             db,
             config,
-            redis
+            redis,
         }
     }
 }

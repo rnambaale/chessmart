@@ -43,6 +43,9 @@ pub enum BunnyChessApiError {
 
     #[error("Session not found error {0}")]
     SessionNotFoundError(String),
+
+    #[error("{0}")]
+    UnauthorizedError(String),
 }
 
 impl IntoResponse for BunnyChessApiError {
@@ -136,6 +139,12 @@ impl BunnyChessApiError {
         None,
         vec![],
         StatusCode::NOT_FOUND,
+      ),
+      UnauthorizedError(_err) => (
+        "UNAUTHORIZED_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::UNAUTHORIZED,
       ),
     };
 

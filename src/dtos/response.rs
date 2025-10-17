@@ -26,3 +26,16 @@ impl LoginResponseDto {
     }
   }
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MessageResponseDto {
+  pub message: String,
+}
+
+impl MessageResponseDto {
+  pub fn new<S: Into<String>>(message: S) -> Self {
+    Self {
+      message: message.into(),
+    }
+  }
+}

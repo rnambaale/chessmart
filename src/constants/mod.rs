@@ -23,3 +23,8 @@ pub static REFRESH_TOKEN_DECODE_KEY: LazyLock<DecodingKey> = LazyLock::new(|| {
   let key = TokenSecretConfig::parse().refresh_token_public_key;
   DecodingKey::from_rsa_pem(key.as_bytes()).unwrap()
 });
+
+pub static ACCESS_TOKEN_DECODE_KEY: LazyLock<DecodingKey> = LazyLock::new(|| {
+  let key = TokenSecretConfig::parse().access_token_public_key;
+  DecodingKey::from_rsa_pem(key.as_bytes()).unwrap()
+});
