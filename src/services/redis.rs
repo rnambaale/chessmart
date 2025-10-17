@@ -39,3 +39,22 @@ where
   client.set(&key.to_string(), &value, K::EXPIRE_TIME).await?;
   Ok(())
 }
+
+pub async fn get<K>(client: &RedisClient, key: &K) -> Result<Option<K::Value>, BunnyChessApiError>
+where
+  K: RedisKey,
+{
+  info!("Get value from redis key :{key}");
+  Ok(
+    client
+      .get(&key.to_string())
+      .await?
+      .map(|v| serde_json::from_str::<K::Value>(&v))
+      .transpose()?,
+  )
+}
+
+pub async fn del(client: &RedisClient, key: &impl RedisKey) -> Result<bool, redis::RedisError> {
+  info!("Delete key in redis :{key:?}");
+  client.del(&key.to_string()).await
+}

@@ -37,6 +37,12 @@ pub enum BunnyChessApiError {
 
     #[error("{0}")]
     InvalidInputError(String),
+
+    #[error("{0}")]
+    InvalidSessionError(String),
+
+    #[error("Session not found error {0}")]
+    SessionNotFoundError(String),
 }
 
 impl IntoResponse for BunnyChessApiError {
@@ -118,6 +124,18 @@ impl BunnyChessApiError {
         None,
         vec![],
         StatusCode::UNAUTHORIZED,
+      ),
+      InvalidSessionError(_err) => (
+        "INVALID_SESSION_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::BAD_REQUEST,
+      ),
+      SessionNotFoundError(_err) => (
+        "SESSION_NOT_FOUND_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::NOT_FOUND,
       ),
     };
 
