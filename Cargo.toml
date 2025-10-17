@@ -16,7 +16,7 @@ anyhow = { version = "1.0.94", features = ["backtrace"] }
 argon2 = "0.5.3"
 async-trait = "0.1.80"
 axum = { version = "0.7.9", features = ["http2"] }
-chrono = "0.4.39"
+chrono = { version = "0.4.39", features = ["serde"] }
 clap = { version = "4.5.23", features = ["env", "derive"] }
 dotenvy = "0.15.7"
 fake = { version = "4.4.0", features = ["derive", "uuid", "chrono"] }
@@ -29,7 +29,7 @@ redis = { version = "0.32.7", features = ["tokio-comp"] }
 reqwest = { version = "0.12.9", default-features = false }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
-sqlx = { version = "0.8.2", features = ["postgres", "runtime-tokio", "tls-rustls", "migrate", "macros", "uuid"] }
+sqlx = { version = "0.8.2", features = ["postgres", "runtime-tokio", "tls-rustls", "migrate", "macros", "uuid", "chrono"] }
 testcontainers = "0.23.1"
 testcontainers-modules = { version = "0.11.4", features = ["postgres"] }
 thiserror = "2.0.17"

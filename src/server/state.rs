@@ -73,7 +73,7 @@ impl AppStateBuilder {
         let redis_config = self.redis_config.expect("redis-config not set");
         let redis = RedisDB::new(&redis_config).await?;
 
-        let token_secret = self.token_secret_config.expect("token-secret-config not set");
+        let token_secret_config = self.token_secret_config.expect("token-secret-config not set");
 
         Ok(AppState::new(
             db,
@@ -82,7 +82,7 @@ impl AppStateBuilder {
                 db_config,
                 self.tracing_config,
                 redis_config,
-                token_secret,
+                token_secret_config,
             ),
             redis
         ))

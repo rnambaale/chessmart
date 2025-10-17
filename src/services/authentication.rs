@@ -1,3 +1,4 @@
+use chrono::Utc;
 use tracing::info;
 use uuid::Uuid;
 
@@ -14,7 +15,10 @@ pub async fn register(state: AppState, req: &RegisterRequestDto) -> Result<Uuid,
         id: user_id,
         email: req.email.to_string(),
         username: req.username.to_string(),
-        password: utils::password::hash(req.password.to_string()).await?
+        password: utils::password::hash(req.password.to_string()).await?,
+        last_login_at: None,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     database::user::save(&mut tx, &user).await?;
@@ -65,9 +69,12 @@ pub async fn login(state: &AppState, req: &LoginRequestDto) -> Result<LoginRespo
 
     let mut tx = state.db.begin_tx().await?;
     let user = database::user::get_by_email(&mut tx, &req.email).await?;
-    tx.commit().await?;
 
     utils::password::verify(req.password.clone(), user.password.clone()).await?;
+
+    database::user::update_last_login(&mut tx, &user).await?;
+
+    tx.commit().await?;
 
     let session_id = services::session::set(&state.redis, user.id).await?;
     let resp = services::token::generate_tokens(user.id, session_id)?;
