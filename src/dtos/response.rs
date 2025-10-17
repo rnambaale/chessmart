@@ -15,3 +15,14 @@ pub struct LoginResponseDto {
   pub jwt_refresh: String,
   pub jwt_refresh_expires_in: u64,
 }
+
+impl LoginResponseDto {
+  pub fn new(access_token: String, refresh_token: String, expire_in: u64, jwt_refresh_expires_in: u64) -> Self {
+    Self {
+      jwt: access_token,
+      jwt_refresh: refresh_token,
+      jwt_expires_in: expire_in,
+      jwt_refresh_expires_in
+    }
+  }
+}

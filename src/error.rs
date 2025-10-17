@@ -29,6 +29,12 @@ pub enum BunnyChessApiError {
     #[error("Task execution error: {0}")]
     SpawnTaskError(#[from] tokio::task::JoinError),
 
+    #[error(transparent)]
+    ParseJsonError(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    JwtError(#[from] jsonwebtoken::errors::Error),
+
     #[error("{0}")]
     InvalidInputError(String),
 }
@@ -100,6 +106,18 @@ impl BunnyChessApiError {
         None,
         vec![],
         StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      ParseJsonError(_err) => (
+        "PARSE_JSON_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      JwtError(_err) => (
+        "UNAUTHORIZED_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::UNAUTHORIZED,
       ),
     };
 

@@ -78,6 +78,21 @@ impl RedisConfig {
   }
 }
 
+#[derive(Debug, Clone, Parser, Default)]
+pub struct TokenSecretConfig {
+    #[clap(long, env = "ACCESS_TOKEN_PRIVATE_KEY")]
+    pub access_token_private_key: String,
+
+    #[clap(long, env = "ACCESS_TOKEN_PUBLIC_KEY")]
+    pub access_token_public_key: String,
+
+    #[clap(long, env = "REFRESH_TOKEN_PRIVATE_KEY")]
+    pub refresh_token_private_key: String,
+
+    #[clap(long, env = "REFRESH_TOKEN_PUBLIC_KEY")]
+    pub refresh_token_public_key: String,
+}
+
 #[derive(Debug, Clone, Parser)]
 pub struct ServerConfig {
     #[clap(long, default_value = "[::]:3338", env = "HOST_PORT")]
@@ -108,15 +123,17 @@ pub struct ApiConfig {
     pub tracing: Option<TracingConfig>,
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
+    pub token_secret: TokenSecretConfig,
 }
 
-impl From<Opts> for ApiConfig {
-    fn from(opts: Opts) -> Self {
+impl From<(Opts, TokenSecretConfig)> for ApiConfig {
+    fn from((opts, token_secret): (Opts, TokenSecretConfig)) -> Self {
         Self {
             server: opts.server,
             tracing: opts.tracing,
             database: opts.database,
             redis: opts.redis,
+            token_secret
         }
     }
 }
@@ -125,7 +142,9 @@ impl ApiConfig {
     pub fn read_config_with_defaults() -> Self {
         let opts: Opts = Opts::parse();
 
-        opts.into()
+        let token_secret_config: TokenSecretConfig = TokenSecretConfig::parse();
+
+        (opts, token_secret_config).into()
     }
 }
 
@@ -136,12 +155,14 @@ impl ApiConfig {
         database: DatabaseConfig,
         tracing: Option<TracingConfig>,
         redis: RedisConfig,
+        token_secret: TokenSecretConfig,
     ) -> Self {
         Self {
             server,
             database,
             tracing,
             redis,
+            token_secret,
         }
     }
 }

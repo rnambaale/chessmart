@@ -9,7 +9,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 pub mod state;
 
-use crate::{ dtos::{request::RegisterRequestDto, response::RegisterResponseDto}, routes::authentication::post_register, server::state::AppState};
+use crate::{ dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::{LoginResponseDto, RegisterResponseDto}}, routes::authentication::{login, post_register}, server::state::AppState};
 
 pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 
@@ -35,10 +35,13 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 #[openapi(
     paths(
         crate::routes::authentication::post_register,
+        crate::routes::authentication::login,
     ),
     components(schemas(
         RegisterRequestDto,
         RegisterResponseDto,
+        LoginRequestDto,
+        LoginResponseDto,
     ))
 )]
 struct ApiDoc;
@@ -46,8 +49,8 @@ struct ApiDoc;
 fn app(state: AppState) -> Router {
     let router = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        // POST auth/login
         .route("/auth/register", post(post_register))
+        .route("/auth/login", post(login))
         .with_state(state);
 
     router

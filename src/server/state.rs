@@ -1,4 +1,4 @@
-use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
+use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
 
 #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {
@@ -26,6 +26,7 @@ pub struct AppStateBuilder {
     server_config: Option<ServerConfig>,
     tracing_config: Option<TracingConfig>,
     redis_config: Option<RedisConfig>,
+    token_secret_config: Option<TokenSecretConfig>,
 }
 
 impl AppStateBuilder {
@@ -35,6 +36,7 @@ impl AppStateBuilder {
             server_config: None,
             tracing_config: None,
             redis_config: None,
+            token_secret_config: None,
         }
     }
 
@@ -58,6 +60,11 @@ impl AppStateBuilder {
         self
     }
 
+    pub fn with_token_secret(mut self, token_secret_config: Option<TokenSecretConfig>) -> Self {
+        self.token_secret_config = token_secret_config;
+        self
+    }
+
     pub async fn build(self) -> Result<AppState<PostgresDB>, BunnyChessApiError> {
         let db_config = self.db_config.expect("db-config not set");
         let db = PostgresDB::new(&db_config).await?;
@@ -66,6 +73,8 @@ impl AppStateBuilder {
         let redis_config = self.redis_config.expect("redis-config not set");
         let redis = RedisDB::new(&redis_config).await?;
 
+        let token_secret = self.token_secret_config.expect("token-secret-config not set");
+
         Ok(AppState::new(
             db,
             ApiConfig::new(
@@ -73,6 +82,7 @@ impl AppStateBuilder {
                 db_config,
                 self.tracing_config,
                 redis_config,
+                token_secret,
             ),
             redis
         ))

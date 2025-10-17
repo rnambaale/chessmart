@@ -54,16 +54,15 @@ pub async fn login(
   State(state): State<AppState>,
   Json(req): Json<LoginRequestDto>,
 ) -> Result<Json<LoginResponseDto>, BunnyChessApiError> {
-    todo!();
-    // info!("Login user with request: {req:?}.");
-    // match service::authentication::login(&state, &req).await {
-    //     Ok(resp) => {
-    //         info!("Success login user_id: {resp:?}.");
-    //         Ok(Json(resp))
-    //     }
-    //     Err(e) => {
-    //         warn!("Unsuccessfully login user error: {e:?}.");
-    //         Err(e)
-    //     }
-    // }
+    info!("Login user with request: {req:?}.");
+    match services::authentication::login(&state, &req).await {
+        Ok(resp) => {
+            info!("Success login user_id: {resp:?}.");
+            Ok(Json(resp))
+        }
+        Err(e) => {
+            warn!("Unsuccessfully login user error: {e:?}.");
+            Err(e)
+        }
+    }
 }
