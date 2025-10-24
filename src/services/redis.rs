@@ -30,6 +30,11 @@ impl Display for SessionKey {
     }
 }
 
+impl RedisKey for String  {
+    type Value = String;
+    const EXPIRE_TIME: Duration = EXPIRE_SESSION_CODE_SECS;
+}
+
 pub async fn set<K>(client: &RedisClient, (key, value): (&K, &K::Value)) -> Result<(), BunnyChessApiError>
 where
   K: RedisKey,
@@ -39,6 +44,20 @@ where
   client.set(&key.to_string(), &value, K::EXPIRE_TIME).await?;
   Ok(())
 }
+
+// pub async fn hset<K>(client: &RedisClient, key: &K, value: &PlayerStatusUpdate) -> Result<(), BunnyChessApiError>
+// where
+//   K: RedisKey,
+// {
+//   // info!("Set value to redis key :{key:?} value :{value:?}");
+//   // let value = serde_json::to_string(value)?;
+//   let field_values: Vec<(&str, &str)> = vec![
+//     ("status", &value.status.to_str()),
+//     ("game_type", &value.game_type_to_str())
+//   ];
+//   // client.hset(&key.to_string(), &value, K::EXPIRE_TIME).await?;
+//   Ok(())
+// }
 
 pub async fn get<K>(client: &RedisClient, key: &K) -> Result<Option<K::Value>, BunnyChessApiError>
 where
@@ -53,6 +72,15 @@ where
       .transpose()?,
   )
 }
+
+// pub async fn hgetall<K>(client: &RedisClient, key: &K) -> Result<Option<HashMap<String, String>>, BunnyChessApiError>
+// where
+//   K: RedisKey,
+// {
+//   info!("Get hash values from redis key :{key}");
+
+//   Ok(client.hgetall(&key.to_string()).await?)
+// }
 
 pub async fn del(client: &RedisClient, key: &impl RedisKey) -> Result<bool, redis::RedisError> {
   info!("Delete key in redis :{key:?}");

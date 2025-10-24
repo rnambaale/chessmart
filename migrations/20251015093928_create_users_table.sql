@@ -1,3 +1,4 @@
+-- Add migration script here
 CREATE TABLE users (
     id uuid NOT NULL,
     email VARCHAR(255) NOT NULL,

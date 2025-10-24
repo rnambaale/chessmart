@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -38,4 +39,19 @@ impl MessageResponseDto {
       message: message.into(),
     }
   }
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MeResponseDto {
+  pub id: String,
+  pub email: String,
+  pub username: String,
+  pub is_admin: bool,
+  pub created_at: DateTime<Utc>,
+  pub last_login_at: Option<DateTime<Utc>>,
+  pub status: String,
+  pub game_type: Option<String>,
+  pub ranked: Option<bool>,
+  pub game_id: Option<String>,
+  pub mmr: u64,
 }
