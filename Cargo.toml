@@ -3,6 +3,8 @@ resolver = "2"
 
 members = [
     "gateway",
+    "matchmaking",
+    "shared",
 ]
 
 [workspace.dependencies]

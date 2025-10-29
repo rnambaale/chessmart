@@ -1,0 +1,17 @@
+[package]
+name = "matchmaking"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+clap = { workspace = true, features = ["env", "derive"] }
+prost = "0.12"
+redis = { workspace = true, features = ["tokio-comp"] }
+shared = { path = "../shared" }
+sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "tls-rustls", "migrate", "macros", "uuid", "chrono"] }
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"]}
+tonic = "0.10"
+tower = "0.4"
+tracing = { workspace = true }
