@@ -6,12 +6,12 @@ use shared::{error::BunnyChessApiError, primitives::GameType};
 use crate::{repositories::{matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}}, services::player_status_service::{MatchMakingStatus, PlayerStatusService}};
 
 // Repository service (similar to NestJS)
-pub struct MatchmakingQueueRepositoryService {
+pub struct MatchmakingQueueService {
     matchmaking_queue_repository: Arc<dyn MatchmakingQueue>,
     player_status_service: Arc<dyn PlayerStatusService>,
 }
 
-impl MatchmakingQueueRepositoryService {
+impl MatchmakingQueueService {
     pub fn new(
         matchmaking_queue_repository: Arc<dyn MatchmakingQueue>,
         player_status_service: Arc<dyn PlayerStatusService>

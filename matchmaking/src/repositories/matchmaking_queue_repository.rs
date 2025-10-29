@@ -1,6 +1,8 @@
 use redis::{RedisResult, Script, ToRedisArgs};
+use shared::error::BunnyChessApiError;
 use shared::primitives::GameType;
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -34,6 +36,20 @@ impl ToRedisArgs for PlayerStatus {
 
         // Or use numeric representation:
         // out.write_arg_fmt(self.as_i32());
+    }
+}
+
+impl FromStr for PlayerStatus {
+    type Err = BunnyChessApiError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "undefined" => Ok(PlayerStatus::Undefined),
+            "searching" => Ok(PlayerStatus::Searching),
+            "pending" => Ok(PlayerStatus::Pending),
+            "playing" => Ok(PlayerStatus::Playing),
+            _ => Err(BunnyChessApiError::UnknownGameTypeError(s.into())),
+        }
     }
 }
 

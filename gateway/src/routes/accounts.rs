@@ -1,7 +1,7 @@
 use axum::{extract::State, Json};
 use tracing::info;
 
-use crate::{dtos::response::MeResponseDto, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, services, utils::claim::UserClaims};
+use crate::{dtos::response::MeResponseDto, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, utils::claim::UserClaims};
 
 #[utoipa::path(
     get,
@@ -14,7 +14,7 @@ use crate::{dtos::response::MeResponseDto, error::{AppResponseError, BunnyChessA
     security(("jwt" = []))
 )]
 pub async fn find_account(
-  State(state): State<AppState>,
+  State(_state): State<AppState>,
   user: UserClaims,
 ) -> Result<Json<MeResponseDto>, BunnyChessApiError> {
     info!("Get profile user id: {}.", user.uid);

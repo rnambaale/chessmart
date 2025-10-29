@@ -3,7 +3,7 @@ use shared::error::BunnyChessApiError;
 
 use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, redis::redis::{RedisClient, RedisDB}};
 
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {
     pub db: DB,
     pub config: ApiConfig,

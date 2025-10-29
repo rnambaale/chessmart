@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
 use redis::ToRedisArgs;
+use serde::{Deserialize, Serialize};
 
 use crate::error::BunnyChessApiError;
 
-// #[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum GameType {
     Rapid10_0,
     Blitz5_3,
