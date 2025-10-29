@@ -10,6 +10,12 @@ pub enum BunnyChessApiError {
 
     #[error("{0}")]
     UnknownGameTypeError(String),
+
+    // #[error("Session not found error {0}")]
+    // SessionNotFoundError(String),
+
+    #[error("Invalid quote uuid {0}")]
+    InvalidUuid(#[from] uuid::Error),
 }
 
 impl From<BunnyChessApiError> for tonic::Status {
