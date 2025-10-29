@@ -3,7 +3,7 @@ use std::sync::Arc;
 use redis::RedisResult;
 use shared::error::BunnyChessApiError;
 
-use crate::{repositories::{matchmaking_queue_repository::{GameType, MatchmakingQueue, PlayerStatus, QueueKeys}, player_status_repository::PlayerStatusRepositoryService}, services::player_status_service::{MatchMakingStatus, PlayerStatusService}};
+use crate::{repositories::{matchmaking_queue_repository::{GameType, MatchmakingQueue, PlayerStatus}}, services::player_status_service::{MatchMakingStatus, PlayerStatusService}};
 
 // Repository service (similar to NestJS)
 pub struct MatchmakingQueueRepositoryService {
@@ -43,17 +43,11 @@ impl MatchmakingQueueRepositoryService {
         game_type: &GameType,
         ranked: bool,
     ) -> RedisResult<()> {
-        let queue_keys = Self::get_queue_keys(game_type, ranked);
-        let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
-
         self.matchmaking_queue_repository.add_player_to_queue(
-            &queue_keys.queue_key,
-            &queue_keys.times_key,
-            &account_status_key,
-            &PlayerStatus::Searching,
             account_id,
             mmr,
-            &ranked.to_string().as_str(),
+            game_type,
+            ranked,
         ).await
     }
 
@@ -75,30 +69,12 @@ impl MatchmakingQueueRepositoryService {
         let game_type = game_type.unwrap();
         let ranked = ranked.unwrap();
 
-        let queue_keys = Self::get_queue_keys(&game_type, ranked);
-        let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
-
         self.matchmaking_queue_repository.remove_player_from_queue(
-            &queue_keys.queue_key,
-            &queue_keys.times_key,
-            &account_status_key,
             account_id,
             game_type,
             ranked
         ).await?;
 
         Ok(())
-    }
-
-    fn get_queue_keys(game_type: &GameType, ranked: bool) -> QueueKeys {
-        let ranked_value = match ranked {
-            true => "ranked",
-            false => "normal"
-        };
-
-        QueueKeys {
-            queue_key: format!("matchmaking:queue:{}:{}", game_type.to_str(), ranked_value),
-            times_key: format!("matchmaking:queue:{}:{}:times", game_type.to_str(), ranked_value)
-        }
     }
 }

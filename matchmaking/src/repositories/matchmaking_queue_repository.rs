@@ -5,6 +5,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::repositories::player_status_repository::PlayerStatusRepositoryService;
+
 // #[derive(Serialize, Deserialize)]
 pub enum GameType {
     Rapid10_0,
@@ -108,20 +110,14 @@ pub trait MatchmakingQueue: Send + Sync {
 
     async fn add_player_to_queue(
         &self,
-        queue_key: &str,
-        times_key: &str,
-        account_status_key: &str,
-        new_status: &PlayerStatus,
         account_id: &str,
         mmr: u16,
-        ranked: &str,
+        game_type: &GameType,
+        ranked: bool
     ) -> RedisResult<()>;
 
     async fn remove_player_from_queue(
         &self,
-        queue_key: &str,
-        times_key: &str,
-        account_status_key: &str,
         account_id: &str,
         game_type: GameType,
         ranked: bool,
@@ -161,6 +157,18 @@ impl RedisMatchmakingQueue {
             scripts: Arc::new(Mutex::new(scripts)),
         }
     }
+
+    fn get_queue_keys(game_type: &GameType, ranked: bool) -> QueueKeys {
+        let ranked_value = match ranked {
+            true => "ranked",
+            false => "normal"
+        };
+
+        QueueKeys {
+            queue_key: format!("matchmaking:queue:{}:{}", game_type.to_str(), ranked_value),
+            times_key: format!("matchmaking:queue:{}:{}:times", game_type.to_str(), ranked_value)
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -194,13 +202,10 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
 
     async fn add_player_to_queue(
         &self,
-        queue_key: &str,
-        times_key: &str,
-        account_status_key: &str,
-        new_status: &PlayerStatus,
         account_id: &str,
         mmr: u16,
-        ranked: &str,
+        game_type: &GameType,
+        ranked: bool
     ) -> RedisResult<()> {
         let scripts = self.scripts.lock().await;
         let script = scripts.get("addPlayerToQueue")
@@ -209,11 +214,15 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
                 "addPlayerToQueue script not found",
             )))?;
 
+        let queue_keys = Self::get_queue_keys(&game_type, ranked);
+        let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
+        let player_status = PlayerStatus::Searching;
+
         script
-            .key(queue_key)
-            .key(times_key)
-            .key(account_status_key)
-            .arg(new_status.as_str())
+            .key(&queue_keys.queue_key)
+            .key(&queue_keys.times_key)
+            .key(&account_status_key)
+            .arg(player_status.as_str())
             .arg(account_id)
             .arg(mmr)
             .arg(ranked)
@@ -225,13 +234,14 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
 
     async fn remove_player_from_queue(
         &self,
-        queue_key: &str,
-        times_key: &str,
-        account_status_key: &str,
         account_id: &str,
         game_type: GameType,
         ranked: bool,
     ) -> RedisResult<i32> {
+
+        let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
+        let queue_keys = Self::get_queue_keys(&game_type, ranked);
+
         let scripts = self.scripts.lock().await;
         let script = scripts.get("removePlayerFromQueue")
             .ok_or_else(|| redis::RedisError::from((
@@ -240,9 +250,9 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
             )))?;
 
         let result: i32 = script
-            .key(queue_key)
-            .key(times_key)
-            .key(account_status_key)
+            .key(&queue_keys.queue_key)
+            .key(&queue_keys.times_key)
+            .key(&account_status_key)
             .arg(account_id)
             .arg(game_type)
             .arg(ranked)
