@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package matchmaker;
+
+message AddToQueueRequest {
+  string account_id = 1;
+  string game_type = 2;
+  bool ranked = 3;
+}
+
+message AddToQueueResponse {
+}
+
+message RemoveFromQueueRequest {
+  string account_id = 1;
+}
+
+message RemoveFromQueueResponse {
+}
+
+message GetAccountStatusRequest {
+  string account_id = 1;
+}
+
+message GetAccountStatusResponse {
+  string status = 1;
+  optional string game_type = 2;
+  optional bool ranked = 3;
+  optional string game_id = 4;
+}
+
+message AcceptPendingGameRequest {
+  string account_id = 1;
+  string pending_game_id = 2;
+}
+
+message AcceptPendingGameResponse {
+}
+
+message GetQueueSizesRequest {}
+
+message QueueSize {
+  uint32 normal = 1;
+  uint32 ranked = 2;
+}
+
+message GetQueueSizesResponse {
+  map<string, QueueSize> queue_sizes = 1;
+}
+
+service MatchmakerService {
+  rpc AddToQueue (AddToQueueRequest) returns (AddToQueueResponse) {}
+  rpc AcceptPendingGame (AcceptPendingGameRequest) returns (AcceptPendingGameResponse) {}
+  rpc RemoveFromQueue (RemoveFromQueueRequest) returns (RemoveFromQueueResponse) {}
+  rpc GetAccountStatus (GetAccountStatusRequest) returns (GetAccountStatusResponse) {}
+  rpc GetQueueSizes (GetQueueSizesRequest) returns (GetQueueSizesResponse) {}
+}

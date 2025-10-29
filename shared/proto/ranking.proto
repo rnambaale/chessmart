@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package ranking;
+
+message GetAccountRankingRequest {
+  string account_id = 1;
+}
+
+message GetAccountRankingResponse {
+  float ranked_mmr = 1;
+  float normal_mmr = 2;
+}
+
+service RankingService {
+  rpc GetAccountRanking (GetAccountRankingRequest) returns (GetAccountRankingResponse) {}
+}
