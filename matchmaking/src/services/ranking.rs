@@ -26,7 +26,7 @@ pub struct MyRankingService;
 impl RankingService for MyRankingService {
     async fn get_account_ranking(
         &self,
-        request: tonic::Request<GetAccountRankingRequest>,
+        _request: tonic::Request<GetAccountRankingRequest>,
     ) -> std::result::Result<
         tonic::Response<GetAccountRankingResponse>,
         tonic::Status,
@@ -36,7 +36,7 @@ impl RankingService for MyRankingService {
 }
 
 impl MyRankingService {
-    pub async fn get_or_create_ranking(account_id: &str) -> Result<Ranking, tonic::Status> {
+    pub async fn get_or_create_ranking(_account_id: &str) -> Result<Ranking, tonic::Status> {
         todo!()
     }
 }

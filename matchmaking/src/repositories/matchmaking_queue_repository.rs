@@ -1,11 +1,9 @@
-use redis::{FromRedisValue, RedisResult, Script, ToRedisArgs};
+use redis::{RedisResult, Script, ToRedisArgs};
 use shared::error::BunnyChessApiError;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
-use crate::repositories::player_status_repository::PlayerStatusRepositoryService;
 
 // #[derive(Serialize, Deserialize)]
 pub enum GameType {
@@ -43,6 +41,19 @@ impl FromStr for GameType {
             "Bullet1_0" => Ok(GameType::Bullet1_0),
             _ => Err(BunnyChessApiError::UnknownGameTypeError(s.into())),
         }
+    }
+}
+
+impl ToRedisArgs for GameType {
+    fn write_redis_args<W>(&self, out: &mut W)
+    where
+        W: ?Sized + redis::RedisWrite,
+    {
+        // Use string representation
+        out.write_arg(self.to_str().as_bytes());
+
+        // Or use numeric representation:
+        // out.write_arg_fmt(self.as_i32());
     }
 }
 
@@ -106,97 +117,20 @@ pub trait MatchmakingQueue: Send + Sync {
         ranked: &str,
     ) -> RedisResult<()>;
 
-    // async fn remove_player_from_queue(
-    //     &self,
-    //     queue_key: &str,
-    //     times_key: &str,
-    //     account_status_key: &str,
-    //     account_id: &str,
-    // ) -> RedisResult<i32>;
+    async fn remove_player_from_queue(
+        &self,
+        queue_key: &str,
+        times_key: &str,
+        account_status_key: &str,
+        account_id: &str,
+        game_type: GameType,
+        ranked: bool,
+    ) -> RedisResult<i32>;
 }
 
 // pub const MATCH_PLAYERS_SCRIPT: &str = include_str!("lua-scripts/match-players.lua");
 pub const ADD_PLAYER_TO_QUEUE_SCRIPT: &str = include_str!("lua-scripts/add-player-to-queue.lua");
-// pub const REMOVE_PLAYER_FROM_QUEUE_SCRIPT: &str = include_str!("lua-scripts/remove-player-from-queue.lua");
-
-// Repository service (similar to NestJS)
-pub struct MatchmakingQueueRepositoryService {
-    redis: Arc<dyn MatchmakingQueue>,
-    // player_status_repository: Arc<dyn PlayerStatusRepositoryContract>,
-}
-
-impl MatchmakingQueueRepositoryService {
-    pub fn new(
-        redis: Arc<dyn MatchmakingQueue>
-    ) -> Self {
-        Self { redis }
-    }
-
-    // pub async fn match_players(
-    //     &self,
-    //     queue_key: &str,
-    //     times_key: &str,
-    //     base_mmr_range: i32,
-    //     mmr_increase_per_second: f64,
-    //     max_mmr_delta: i32,
-    // ) -> RedisResult<Vec<String>> {
-    //     self.redis.match_players(
-    //         queue_key,
-    //         times_key,
-    //         base_mmr_range,
-    //         mmr_increase_per_second,
-    //         max_mmr_delta,
-    //     ).await
-    // }
-
-    pub async fn add_player_to_queue(
-        &self,
-        account_id: &str,
-        mmr: u16,
-        game_type: &GameType,
-        ranked: bool,
-    ) -> RedisResult<()> {
-        let queue_keys = Self::get_queue_keys(game_type, ranked);
-        let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
-
-        self.redis.add_player_to_queue(
-            &queue_keys.queue_key,
-            &queue_keys.times_key,
-            &account_status_key,
-            &PlayerStatus::Searching,
-            account_id,
-            mmr,
-            &ranked.to_string().as_str(),
-        ).await
-    }
-
-    // pub async fn remove_player_from_queue(
-    //     &self,
-    //     queue_key: &str,
-    //     times_key: &str,
-    //     account_status_key: &str,
-    //     account_id: &str,
-    // ) -> RedisResult<i32> {
-    //     self.redis.remove_player_from_queue(
-    //         queue_key,
-    //         times_key,
-    //         account_status_key,
-    //         account_id,
-    //     ).await
-    // }
-
-    fn get_queue_keys(game_type: &GameType, ranked: bool) -> QueueKeys {
-        let ranked_value = match ranked {
-            true => "ranked",
-            false => "normal"
-        };
-
-        QueueKeys {
-            queue_key: format!("matchmaking:queue:{}:{}", game_type.to_str(), ranked_value),
-            times_key: format!("matchmaking:queue:{}:{}:times", game_type.to_str(), ranked_value)
-        }
-    }
-}
+pub const REMOVE_PLAYER_FROM_QUEUE_SCRIPT: &str = include_str!("lua-scripts/remove-player-from-queue.lua");
 
 // Redis implementation
 pub struct RedisMatchmakingQueue {
@@ -217,10 +151,10 @@ impl RedisMatchmakingQueue {
             "addPlayerToQueue".to_string(),
             Script::new(ADD_PLAYER_TO_QUEUE_SCRIPT),
         );
-        // scripts.insert(
-        //     "removePlayerFromQueue".to_string(),
-        //     Script::new(REMOVE_PLAYER_FROM_QUEUE_SCRIPT),
-        // );
+        scripts.insert(
+            "removePlayerFromQueue".to_string(),
+            Script::new(REMOVE_PLAYER_FROM_QUEUE_SCRIPT),
+        );
 
         Self {
             client,
@@ -289,29 +223,33 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
         Ok(())
     }
 
-    // async fn remove_player_from_queue(
-    //     &self,
-    //     queue_key: &str,
-    //     times_key: &str,
-    //     account_status_key: &str,
-    //     account_id: &str,
-    // ) -> RedisResult<i32> {
-    //     let scripts = self.scripts.lock().await;
-    //     let script = scripts.get("removePlayerFromQueue")
-    //         .ok_or_else(|| redis::RedisError::from((
-    //             redis::ErrorKind::TypeError,
-    //             "removePlayerFromQueue script not found",
-    //         )))?;
+    async fn remove_player_from_queue(
+        &self,
+        queue_key: &str,
+        times_key: &str,
+        account_status_key: &str,
+        account_id: &str,
+        game_type: GameType,
+        ranked: bool,
+    ) -> RedisResult<i32> {
+        let scripts = self.scripts.lock().await;
+        let script = scripts.get("removePlayerFromQueue")
+            .ok_or_else(|| redis::RedisError::from((
+                redis::ErrorKind::TypeError,
+                "removePlayerFromQueue script not found",
+            )))?;
 
-    //     let result: i32 = script
-    //         .key(queue_key)
-    //         .key(times_key)
-    //         .key(account_status_key)
-    //         .arg(account_id)
-    //         // .invoke_async(&mut self.client.get_async_connection().await?)
-    //         .invoke_async(&mut self.client.get_multiplexed_async_connection().await?)
-    //         .await?;
+        let result: i32 = script
+            .key(queue_key)
+            .key(times_key)
+            .key(account_status_key)
+            .arg(account_id)
+            .arg(game_type)
+            .arg(ranked)
+            // .invoke_async(&mut self.client.get_async_connection().await?)
+            .invoke_async(&mut self.client.get_multiplexed_async_connection().await?)
+            .await?;
 
-    //     Ok(result)
-    // }
+        Ok(result)
+    }
 }

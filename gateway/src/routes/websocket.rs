@@ -4,7 +4,7 @@ use axum::{extract::{ws::{Message, WebSocket}, ConnectInfo, WebSocketUpgrade}, r
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{services::{self, matchmaking_service::AddToQueueRequestPb}, utils::claim::UserClaims};
+use crate::utils::claim::UserClaims;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -32,8 +32,8 @@ struct ChatData {
 #[derive(Debug, Deserialize)]
 struct AddToQueueDto {
     #[serde(rename = "gameType")]
-    game_type: String,
-    ranked: bool,
+    _game_type: String,
+    _ranked: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,7 +42,7 @@ enum ServerMessage {
     EventAck { received: bool },
     ChatAck { delivered: bool },
     Pong,
-    Ack,
+    _Ack,
 }
 
 /// The handler for the HTTP request (this gets called when the HTTP request lands at the start
@@ -116,19 +116,20 @@ async fn handle_ping(socket: &mut WebSocket) {
     }
 }
 
-async fn handle_add_to_queue(add_to_queue_data: AddToQueueDto, account_id: Uuid, socket: &mut WebSocket) {
-    println!("Add to queue game_type: {}, ranked: {}", add_to_queue_data.game_type, add_to_queue_data.ranked);
+async fn handle_add_to_queue(_add_to_queue_data: AddToQueueDto, _account_id: Uuid, _socket: &mut WebSocket) {
+    todo!()
+    // println!("Add to queue game_type: {}, ranked: {}", add_to_queue_data.game_type, add_to_queue_data.ranked);
 
-    services::matchmaking_service::add_to_queue(&AddToQueueRequestPb{
-        account_id,
-        game_type: add_to_queue_data.game_type,
-        ranked: add_to_queue_data.ranked,
-    })
-    .await
-    .expect("Failed to add player to queue");
+    // services::matchmaking_service::add_to_queue(&AddToQueueRequestPb{
+    //     account_id,
+    //     game_type: add_to_queue_data.game_type,
+    //     ranked: add_to_queue_data.ranked,
+    // })
+    // .await
+    // .expect("Failed to add player to queue");
 
-    let response = ServerMessage::Ack;
-    if let Ok(json) = serde_json::to_string(&response) {
-        let _ = socket.send(Message::Text(json)).await;
-    }
+    // let response = ServerMessage::Ack;
+    // if let Ok(json) = serde_json::to_string(&response) {
+    //     let _ = socket.send(Message::Text(json)).await;
+    // }
 }

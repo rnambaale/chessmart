@@ -1,9 +1,9 @@
 use std::{str::FromStr, sync::Arc};
 
-use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RankingService, RankingServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse};
+use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse};
 use tonic::transport::Server;
 
-use crate::{config::ApiConfig, repositories::matchmaking_queue_repository::{GameType, MatchmakingQueue, MatchmakingQueueRepositoryService, RedisMatchmakingQueue}, server::state::{AppState, AppStateBuilder}, services::ranking::MyRankingService};
+use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::{GameType, RedisMatchmakingQueue}, player_status_repository::PlayerStatusRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::MatchmakingQueueRepositoryService, player_status_service::PlayerStatusServiceImpl, ranking::MyRankingService}};
 
 pub mod services;
 mod config;
@@ -20,7 +20,10 @@ pub struct MyMatchmakerService {
 }
 
 impl MyMatchmakerService {
-    pub fn new(state: Arc<AppState>, matchmaking_queue_repository: MatchmakingQueueRepositoryService) -> Self {
+    pub fn new(
+        state: Arc<AppState>,
+        matchmaking_queue_repository: MatchmakingQueueRepositoryService,
+    ) -> Self {
         Self { state, matchmaking_queue_repository }
     }
 }
@@ -78,23 +81,15 @@ impl MatchmakerService for MyMatchmakerService {
 
     async fn remove_from_queue(
         &self,
-        _request: tonic::Request<RemoveFromQueueRequest>,
+        request: tonic::Request<RemoveFromQueueRequest>,
     ) -> Result<tonic::Response<RemoveFromQueueResponse>, tonic::Status> {
-        todo!()
-        /*
-        const { status, gameType, ranked } = await this.playerStatusService.getPlayerStatus(accountId);
-        if (!(status === PlayerStatus.Searching && gameType && ranked != null)) {
-        return;
-        }
-        await this.matchmakingQueueRepository.removePlayerFromQueue({
-        accountId,
-        gameType,
-        ranked,
-        });
-        this.logger.debug(
-        `Player ${accountId} removed from ${ranked ? 'ranked' : 'normal'} ${gameType} queue`,
-        );
-         */
+        let RemoveFromQueueRequest {
+            account_id,
+        } = request.into_inner();
+
+        self.matchmaking_queue_repository.remove_player_from_queue(&account_id).await?;
+
+        Ok(tonic::Response::new(RemoveFromQueueResponse{}))
     }
 
     async fn get_account_status(
@@ -137,12 +132,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let addr = "[::1]:50051".parse()?;
 
+    let player_status_repos = PlayerStatusRepositoryService::new();
+
     let matchmaking_queue_repository = MatchmakingQueueRepositoryService::new(
-        Arc::new(RedisMatchmakingQueue::new(state.redis.clone()))
+        Arc::new(RedisMatchmakingQueue::new(state.redis.clone())),
+        Arc::new(PlayerStatusServiceImpl::new(player_status_repos))
     );
+
     let matchmaker_service = MyMatchmakerService::new(
         Arc::new(state),
-        matchmaking_queue_repository
+        matchmaking_queue_repository,
     );
 
     println!("MatchmakerService gRPC server running on {}", addr);
