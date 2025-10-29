@@ -22,6 +22,7 @@ jsonwebtoken = "9.3.1"
 opentelemetry = "0.22.0"
 opentelemetry-otlp = { version = "0.15.0", features = ["http-proto", "reqwest-client"] }
 opentelemetry_sdk = { version = "0.22.1", features = ["rt-tokio"] }
+prost = "0.12"
 redis = { version = "0.32.7", features = ["tokio-comp"] }
 reqwest = { version = "0.12.9", default-features = false }
 serde = { version = "1.0.228", features = ["derive"] }
@@ -30,7 +31,9 @@ sqlx = { version = "0.8.2", features = ["postgres", "runtime-tokio", "tls-rustls
 testcontainers = "0.23.1"
 testcontainers-modules = { version = "0.11.4", features = ["postgres"] }
 thiserror = "2.0.17"
-tokio = { version = "1.47.1", features = ["full"] }
+tokio = { version = "1.47.1" }
+tonic = "0.10"
+tower = "0.4"
 tower-http = { version = "0.6.6", features = ["cors", "fs", "set-header"] }
 tracing = "0.1.41"
 tracing-opentelemetry = "0.23.0"

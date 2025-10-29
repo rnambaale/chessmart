@@ -7,11 +7,11 @@ edition = "2021"
 async-trait = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["env", "derive"] }
-prost = "0.12"
+prost = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp"] }
 shared = { path = "../shared" }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "tls-rustls", "migrate", "macros", "uuid", "chrono"] }
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"]}
-tonic = "0.10"
-tower = "0.4"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"]}
+tonic = { workspace = true }
+tower = { workspace = true }
 tracing = { workspace = true }
