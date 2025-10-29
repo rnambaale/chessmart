@@ -1,6 +1,7 @@
+use std::net::SocketAddr;
+
 use axum::{
-    routing::post,
-    Router,
+    routing::{get, post}, Router
 };
 
 use tower_http::cors::{Any, CorsLayer};
@@ -9,13 +10,15 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 pub mod state;
 
-use crate::{ dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, routes::authentication::{login, logout, post_register, refresh}, server::state::AppState, utils::claim::UserClaims};
+use crate::{ dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, routes::authentication::{login, logout, post_register, refresh}, routes::websocket::ws_handler, server::state::AppState, utils::claim::UserClaims};
 
 pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 
     info!("listening on: 3000");
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
 
     axum::serve(
         listener,
@@ -25,7 +28,9 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
                 .allow_headers(Any)
                 .allow_methods(Any)
                 .expose_headers(Any),
-        ).into_make_service()
+        )
+        //.into_make_service()
+        .into_make_service_with_connect_info::<SocketAddr>()
     ).await?;
 
     Ok(())
@@ -54,10 +59,16 @@ struct ApiDoc;
 fn app(state: AppState) -> Router {
     let router = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+
+        // Auth routes
         .route("/auth/register", post(post_register))
         .route("/auth/login", post(login))
         .route("/auth/refresh", post(refresh))
         .route("/auth/logout", post(logout))
+
+        // WebSocket route
+        .route("/ws", get(ws_handler))
+
         .with_state(state);
 
     router
