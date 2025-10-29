@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::Arc};
 use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse, primitives::GameType};
 use tonic::transport::Server;
 
-use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::MatchmakingQueueService, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceImpl}, ranking::MyRankingService}};
+use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceImpl}}};
 
 pub mod services;
 mod config;
@@ -47,34 +47,17 @@ impl MatchmakerService for MyMatchmakerService {
             game_type
         } = request.into_inner();
 
-        let ranking = MyRankingService::get_or_create_ranking(&account_id).await?;
-
-        let mmr = match ranked {
-            true => ranking.ranked_mmr,
-            false => ranking.normal_mmr,
-        };
+        let game_type = GameType::from_str(&game_type)?;
 
         self.matchmaking_queue_service.add_player_to_queue(
-            &account_id,
-            mmr,
-            &GameType::from_str(&game_type)?,
-            ranked
+            AddToQueue {
+                account_id,
+                game_type,
+                ranked
+            }
         ).await.unwrap();
 
         Ok(tonic::Response::new(AddToQueueResponse{}))
-        /*
-
-        const ranking = await this.rankingService.getOrCreateRanking(accountId);
-        await this.matchmakingQueueRepository.addPlayerToQueue({
-        accountId,
-        mmr: ranked ? ranking.rankedMmr : ranking.normalMmr,
-        gameType,
-        ranked,
-        });
-        this.logger.debug(
-        `Player ${accountId} added to ${ranked ? 'ranked' : 'normal'} ${gameType} queue`,
-        );
-         */
     }
 
     async fn accept_pending_game(

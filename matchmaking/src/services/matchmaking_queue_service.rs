@@ -1,9 +1,14 @@
 use std::sync::Arc;
 
-use redis::RedisResult;
 use shared::{error::BunnyChessApiError, primitives::GameType};
 
-use crate::{repositories::{matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}}, services::player_status_service::{MatchMakingStatus, PlayerStatusService}};
+use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::MyRankingService}};
+
+pub struct AddToQueue {
+    pub account_id: String,
+    pub game_type: GameType,
+    pub ranked: bool,
+}
 
 // Repository service (similar to NestJS)
 pub struct MatchmakingQueueService {
@@ -38,17 +43,30 @@ impl MatchmakingQueueService {
 
     pub async fn add_player_to_queue(
         &self,
-        account_id: &str,
-        mmr: u16,
-        game_type: &GameType,
-        ranked: bool,
-    ) -> RedisResult<()> {
-        self.matchmaking_queue_repository.add_player_to_queue(
+        payload: AddToQueue
+    ) -> Result<(), BunnyChessApiError> {
+
+        let AddToQueue {
             account_id,
-            mmr,
-            game_type,
             ranked,
-        ).await
+            game_type,
+        } = payload;
+
+        let ranking = MyRankingService::get_or_create_ranking(&account_id).await?;
+
+        let mmr = match ranked {
+            true => ranking.ranked_mmr,
+            false => ranking.normal_mmr,
+        };
+
+        self.matchmaking_queue_repository.add_player_to_queue(
+            account_id.as_str(),
+            mmr,
+            &game_type,
+            ranked,
+        ).await?;
+
+        Ok(())
     }
 
     pub async fn remove_player_from_queue(

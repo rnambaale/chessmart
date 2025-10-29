@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use shared::{GetAccountRankingRequest, GetAccountRankingResponse, RankingService};
+use shared::{GetAccountRankingRequest, GetAccountRankingResponse, RankingService, error::BunnyChessApiError};
 
 /*
 export interface Ranking {
@@ -36,7 +36,7 @@ impl RankingService for MyRankingService {
 }
 
 impl MyRankingService {
-    pub async fn get_or_create_ranking(_account_id: &str) -> Result<Ranking, tonic::Status> {
+    pub async fn get_or_create_ranking(_account_id: &str) -> Result<Ranking, BunnyChessApiError> {
         todo!()
     }
 }
