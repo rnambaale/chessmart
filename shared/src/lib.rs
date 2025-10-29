@@ -21,3 +21,4 @@ pub use generated::ranking_service::{GetAccountRankingRequest, GetAccountRanking
 pub use generated::ranking_service::ranking_service_server::{RankingService, RankingServiceServer};
 
 pub mod error;
+pub mod primitives;

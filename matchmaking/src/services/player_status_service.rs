@@ -1,6 +1,6 @@
-use shared::error::BunnyChessApiError;
+use shared::{error::BunnyChessApiError, primitives::GameType};
 
-use crate::repositories::{matchmaking_queue_repository::{GameType, PlayerStatus}, player_status_repository::PlayerStatusRepositoryService};
+use crate::repositories::{matchmaking_queue_repository::{PlayerStatus}, player_status_repository::PlayerStatusRepositoryService};
 
 // #[derive(Serialize, Deserialize)]
 pub struct MatchMakingStatus {

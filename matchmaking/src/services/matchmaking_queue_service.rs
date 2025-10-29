@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use redis::RedisResult;
-use shared::error::BunnyChessApiError;
+use shared::{error::BunnyChessApiError, primitives::GameType};
 
-use crate::{repositories::{matchmaking_queue_repository::{GameType, MatchmakingQueue, PlayerStatus}}, services::player_status_service::{MatchMakingStatus, PlayerStatusService}};
+use crate::{repositories::{matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}}, services::player_status_service::{MatchMakingStatus, PlayerStatusService}};
 
 // Repository service (similar to NestJS)
 pub struct MatchmakingQueueRepositoryService {

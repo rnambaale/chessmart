@@ -1,9 +1,9 @@
 use std::{str::FromStr, sync::Arc};
 
-use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse};
+use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse, primitives::GameType};
 use tonic::transport::Server;
 
-use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::{GameType, RedisMatchmakingQueue}, player_status_repository::PlayerStatusRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::MatchmakingQueueRepositoryService, player_status_service::PlayerStatusServiceImpl, ranking::MyRankingService}};
+use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::MatchmakingQueueRepositoryService, player_status_service::PlayerStatusServiceImpl, ranking::MyRankingService}};
 
 pub mod services;
 mod config;
@@ -15,16 +15,19 @@ mod repositories;
 // #[derive(Debug, Default)]
 pub struct MyMatchmakerService {
     // redis: Arc<RedisDB>,
-    state: Arc<AppState>,
+    // state: Arc<AppState>,
     matchmaking_queue_repository: MatchmakingQueueRepositoryService,
 }
 
 impl MyMatchmakerService {
     pub fn new(
-        state: Arc<AppState>,
+        // state: Arc<AppState>,
         matchmaking_queue_repository: MatchmakingQueueRepositoryService,
     ) -> Self {
-        Self { state, matchmaking_queue_repository }
+        Self {
+            // state,
+            matchmaking_queue_repository
+        }
     }
 }
 
@@ -69,7 +72,6 @@ impl MatchmakerService for MyMatchmakerService {
         `Player ${accountId} added to ${ranked ? 'ranked' : 'normal'} ${gameType} queue`,
         );
          */
-        // todo!()
     }
 
     async fn accept_pending_game(
@@ -121,7 +123,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         token_secret,
     } = ApiConfig::read_config_with_defaults();
 
-    let state = AppStateBuilder::new()
+    let state: AppState = AppStateBuilder::new()
         .with_server(Some(server))
         .with_db(Some(database))
         .with_tracing(tracing)
@@ -140,7 +142,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let matchmaker_service = MyMatchmakerService::new(
-        Arc::new(state),
+        // Arc::new(state),
         matchmaking_queue_repository,
     );
 
