@@ -4,14 +4,14 @@ use std::str::FromStr;
 use shared::error::BunnyChessApiError;
 use sqlx::types::Uuid;
 
-use crate::{database::{self, Database, postgres::PostgresDB}, services::ranking::Ranking};
+use crate::{database::{Database, postgres::PostgresDB}, services::ranking::Ranking};
 
 #[async_trait::async_trait]
 pub trait RankingRepository: Send + Sync {
     async fn find_ranking(
         &self,
         account_id: &str,
-    ) -> Result<Ranking, BunnyChessApiError>;
+    ) -> Result<Option<Ranking>, BunnyChessApiError>;
 
     async fn insert_ranking(
         &self,
@@ -53,7 +53,7 @@ impl RankingRepository for RankingRepositoryService {
     async fn find_ranking(
         &self,
         account_id: &str
-    ) -> Result<Ranking, BunnyChessApiError> {
+    ) -> Result<Option<Ranking>, BunnyChessApiError> {
         let mut tx = self.client.begin_tx()
             .await
             .map_err(|e| BunnyChessApiError::Db(e))?;
@@ -66,8 +66,8 @@ impl RankingRepository for RankingRepositoryService {
             "#,
             account_id
         )
-        //.fetch_optional(&mut *tx)
-        .fetch_one(&mut *tx)
+        .fetch_optional(&mut *tx)
+        // .fetch_one(&mut *tx)
         .await
         .map_err(|e| BunnyChessApiError::Db(e))?;
 
@@ -75,25 +75,25 @@ impl RankingRepository for RankingRepositoryService {
             .await
             .map_err(|e| BunnyChessApiError::Db(e))?;
 
-        // match row {
-        //     Some(record) => Ok(Ranking {
-        //         id: record.id.to_string(),
-        //         account_id: record.account_id,
-        //         ranked_mmr: record.ranked_mmr as u16,
-        //         normal_mmr: record.normal_mmr as u16,
-        //         created_at: record.created_at.unwrap(),
-        //     }),
-        //     None => Err(BunnyChessApiError::RankingNotFound(account_id.to_string())),
-        // }
-        Ok(
-            Ranking {
-                id: row.id.to_string(),
-                account_id: row.account_id,
-                ranked_mmr: row.ranked_mmr as u16,
-                normal_mmr: row.normal_mmr as u16,
-                created_at: row.created_at.unwrap(),
-            }
-        )
+        Ok(match row {
+            Some(record) => Some(Ranking {
+                id: record.id.to_string(),
+                account_id: record.account_id,
+                ranked_mmr: record.ranked_mmr as u16,
+                normal_mmr: record.normal_mmr as u16,
+                created_at: record.created_at.unwrap(),
+            }),
+            None => None,
+        })
+        // Ok(
+        //     Ranking {
+        //         id: row.id.to_string(),
+        //         account_id: row.account_id,
+        //         ranked_mmr: row.ranked_mmr as u16,
+        //         normal_mmr: row.normal_mmr as u16,
+        //         created_at: row.created_at.unwrap(),
+        //     }
+        // )
     }
 
     async fn insert_ranking(

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use shared::{error::BunnyChessApiError, primitives::GameType};
 
-use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::MyRankingService}};
+use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingService}};
 
 pub struct AddToQueue {
     pub account_id: String,
@@ -14,14 +14,16 @@ pub struct AddToQueue {
 pub struct MatchmakingQueueService {
     matchmaking_queue_repository: Arc<dyn MatchmakingQueue>,
     player_status_service: Arc<dyn PlayerStatusService>,
+    ranking_service: Arc<dyn RankingService>,
 }
 
 impl MatchmakingQueueService {
     pub fn new(
         matchmaking_queue_repository: Arc<dyn MatchmakingQueue>,
-        player_status_service: Arc<dyn PlayerStatusService>
+        player_status_service: Arc<dyn PlayerStatusService>,
+        ranking_service: Arc<dyn RankingService>
     ) -> Self {
-        Self { matchmaking_queue_repository, player_status_service }
+        Self { matchmaking_queue_repository, player_status_service, ranking_service }
     }
 
     // pub async fn match_players(
@@ -52,7 +54,7 @@ impl MatchmakingQueueService {
             game_type,
         } = payload;
 
-        let ranking = MyRankingService::get_or_create_ranking(&account_id).await?;
+        let ranking = self.ranking_service.get_or_create_ranking(&account_id).await?;
 
         let mmr = match ranked {
             true => ranking.ranked_mmr,

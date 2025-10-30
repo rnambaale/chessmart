@@ -1,15 +1,15 @@
-use chrono::{DateTime, Utc};
-use shared::{GetAccountRankingRequest, GetAccountRankingResponse, RankingService, error::BunnyChessApiError};
+use std::sync::Arc;
 
-/*
-export interface Ranking {
-  id?: string | undefined;
-  accountId: string;
-  rankedMmr: number;
-  normalMmr: number;
-  createdAt?: Date | undefined;
+use chrono::{DateTime, Utc};
+use shared::error::BunnyChessApiError;
+use sqlx::types::Uuid;
+
+use crate::{repositories::ranking_repository::RankingRepository};
+
+ #[async_trait::async_trait]
+pub trait RankingService: Send + Sync {
+    async fn get_or_create_ranking(&self, account_id: &str) -> Result<Ranking, BunnyChessApiError>;
 }
- */
 
 pub struct Ranking {
     pub id: String,
@@ -19,24 +19,52 @@ pub struct Ranking {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Default)]
-pub struct MyRankingService;
+pub struct MyRankingService {
+    ranking_repository: Arc<dyn RankingRepository>,
+}
 
-#[tonic::async_trait]
-impl RankingService for MyRankingService {
-    async fn get_account_ranking(
-        &self,
-        _request: tonic::Request<GetAccountRankingRequest>,
-    ) -> std::result::Result<
-        tonic::Response<GetAccountRankingResponse>,
-        tonic::Status,
-    > {
-        todo!()
+// #[tonic::async_trait]
+// impl RankingService for MyRankingService {
+//     async fn get_account_ranking(
+//         &self,
+//         _request: tonic::Request<GetAccountRankingRequest>,
+//     ) -> std::result::Result<
+//         tonic::Response<GetAccountRankingResponse>,
+//         tonic::Status,
+//     > {
+//         todo!()
+//     }
+// }
+
+impl MyRankingService {
+    pub const STARTING_MMR: u16 = 1000;
+
+    pub fn new(
+        ranking_repository: Arc<dyn RankingRepository>,
+    ) -> Self {
+        Self { ranking_repository }
     }
 }
 
-impl MyRankingService {
-    pub async fn get_or_create_ranking(_account_id: &str) -> Result<Ranking, BunnyChessApiError> {
-        todo!()
+#[async_trait::async_trait]
+impl RankingService for MyRankingService {
+    async fn get_or_create_ranking(&self, account_id: &str) -> Result<Ranking, BunnyChessApiError> {
+        let record: Option<Ranking> = self.ranking_repository.find_ranking(account_id).await?;
+
+        if let Some(ranking) = record {
+            return Ok(ranking);
+        }
+
+        let ranking = Ranking {
+            account_id: account_id.to_string(),
+            id: Uuid::new_v4().to_string(),
+            ranked_mmr: Self::STARTING_MMR,
+            normal_mmr: Self::STARTING_MMR,
+            created_at: Utc::now(),
+        };
+
+        self.ranking_repository.insert_ranking(&ranking).await?;
+
+        Ok(ranking)
     }
 }
