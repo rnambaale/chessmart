@@ -1,4 +1,5 @@
 use redis::{RedisResult, Script, ToRedisArgs};
+use shared::QueueSize;
 use shared::error::BunnyChessApiError;
 use shared::primitives::GameType;
 use std::collections::HashMap;
@@ -58,6 +59,10 @@ pub struct QueueKeys {
    pub times_key: String,
 }
 
+pub struct QueueType {
+    pub game_type: GameType,
+    pub ranked: bool,
+}
 
 // Trait defining matchmaking operations
 #[async_trait::async_trait]
@@ -85,6 +90,11 @@ pub trait MatchmakingQueue: Send + Sync {
         game_type: GameType,
         ranked: bool,
     ) -> RedisResult<i32>;
+
+    async fn get_queue_sizes(
+        &self,
+        queue_types: Vec<QueueType>,
+    ) -> Result<HashMap<String, QueueSize>, BunnyChessApiError>;
 }
 
 // pub const MATCH_PLAYERS_SCRIPT: &str = include_str!("lua-scripts/match-players.lua");
@@ -224,5 +234,41 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
             .await?;
 
         Ok(result)
+    }
+
+    async fn get_queue_sizes(
+        &self,
+        queue_types: Vec<QueueType>,
+    ) -> Result<HashMap<String, QueueSize>, BunnyChessApiError> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+
+        let queue_keys: Vec<String> = queue_types.iter().map(| queue_type | {
+            Self::get_queue_keys(&queue_type.game_type, queue_type.ranked).queue_key
+        }).collect();
+
+        let mut pipeline = redis::pipe();
+        for queue_key in &queue_keys {
+            pipeline.zcard(queue_key);
+        }
+
+        let results: Vec<usize> = pipeline.query_async(&mut conn).await?;
+
+        let mut queue_sizes: HashMap<String, QueueSize> = HashMap::new();
+
+        for (index, queue_type) in queue_types.into_iter().enumerate() {
+            let queue_size = queue_sizes
+                .entry(queue_type.game_type.to_str().into())
+                .or_insert_with(QueueSize::default);
+
+            let count = results[index] as u32;
+
+            if queue_type.ranked {
+                queue_size.ranked = count;
+            } else {
+                queue_size.normal = count;
+            }
+        }
+
+        Ok(queue_sizes)
     }
 }

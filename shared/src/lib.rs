@@ -19,6 +19,7 @@ pub type AddToQueueRequestPb = generated::matchmaker_service::AddToQueueRequest;
 
 pub use generated::ranking_service::{GetAccountRankingRequest, GetAccountRankingResponse};
 pub use generated::ranking_service::ranking_service_server::{RankingService, RankingServiceServer};
+pub use generated::matchmaker_service::QueueSize;
 
 pub mod error;
 pub mod primitives;

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::BunnyChessApiError;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum GameType {
     Rapid10_0,
     Blitz5_3,

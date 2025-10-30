@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use shared::{error::BunnyChessApiError, primitives::GameType};
+use shared::{QueueSize, error::BunnyChessApiError, primitives::GameType};
 
-use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingService}};
+use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus, QueueType}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingService}};
 
 pub struct AddToQueue {
     pub account_id: String,
@@ -96,5 +96,29 @@ impl MatchmakingQueueService {
         ).await?;
 
         Ok(())
+    }
+
+    pub async fn get_queue_sizes(&self) -> Result<HashMap<String, QueueSize>, BunnyChessApiError> {
+        let game_types = vec![
+            GameType::Rapid10_0,
+            GameType::Blitz5_3,
+            GameType::Blitz5_0,
+            GameType::Blitz3_2,
+            GameType::Blitz3_0,
+            GameType::Bullet1_0,
+        ];
+
+        let queue_types: Vec<QueueType> = game_types.into_iter()
+            .flat_map(|game_type| {
+                [true, false]
+                    .into_iter()
+                    .map(move |ranked| QueueType {
+                        game_type,
+                        ranked,
+                    })
+            })
+            .collect();
+
+        Ok(self.matchmaking_queue_repository.get_queue_sizes(queue_types).await?)
     }
 }

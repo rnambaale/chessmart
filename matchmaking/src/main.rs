@@ -114,7 +114,11 @@ impl MatchmakerService for MyMatchmakerService {
         &self,
         _request: tonic::Request<GetQueueSizesRequest>,
     ) -> Result<tonic::Response<GetQueueSizesResponse>, tonic::Status> {
-        todo!()
+        Ok(tonic::Response::new(
+            GetQueueSizesResponse {
+                queue_sizes: self.matchmaking_queue_service.get_queue_sizes().await?
+            }
+        ))
     }
 }
 
