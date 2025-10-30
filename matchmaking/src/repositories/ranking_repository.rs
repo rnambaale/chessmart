@@ -67,7 +67,6 @@ impl RankingRepository for RankingRepositoryService {
             account_id
         )
         .fetch_optional(&mut *tx)
-        // .fetch_one(&mut *tx)
         .await
         .map_err(|e| BunnyChessApiError::Db(e))?;
 
@@ -85,15 +84,6 @@ impl RankingRepository for RankingRepositoryService {
             }),
             None => None,
         })
-        // Ok(
-        //     Ranking {
-        //         id: row.id.to_string(),
-        //         account_id: row.account_id,
-        //         ranked_mmr: row.ranked_mmr as u16,
-        //         normal_mmr: row.normal_mmr as u16,
-        //         created_at: row.created_at.unwrap(),
-        //     }
-        // )
     }
 
     async fn insert_ranking(
