@@ -74,16 +74,17 @@ impl RankingRepository for RankingRepositoryService {
             .await
             .map_err(|e| BunnyChessApiError::Db(e))?;
 
-        Ok(match row {
-            Some(record) => Some(Ranking {
+        if let Some(record) = row {
+            return Ok(Some(Ranking {
                 id: record.id.to_string(),
                 account_id: record.account_id,
                 ranked_mmr: record.ranked_mmr as u16,
                 normal_mmr: record.normal_mmr as u16,
                 created_at: record.created_at.unwrap(),
-            }),
-            None => None,
-        })
+            }));
+        }
+
+        Ok(None)
     }
 
     async fn insert_ranking(
