@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use shared::{QueueSize, error::BunnyChessApiError, primitives::GameType};
 
-use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus, QueueConfig, QueueType}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingService}};
+use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus, QueueConfig, QueueType}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingServiceContract}};
 
 pub struct AddToQueue {
     pub account_id: String,
@@ -14,14 +14,14 @@ pub struct AddToQueue {
 pub struct MatchmakingQueueService {
     matchmaking_queue_repository: Arc<dyn MatchmakingQueue>,
     player_status_service: Arc<dyn PlayerStatusService>,
-    ranking_service: Arc<dyn RankingService>,
+    ranking_service: Arc<dyn RankingServiceContract>,
 }
 
 impl MatchmakingQueueService {
     pub fn new(
         matchmaking_queue_repository: Arc<dyn MatchmakingQueue>,
         player_status_service: Arc<dyn PlayerStatusService>,
-        ranking_service: Arc<dyn RankingService>
+        ranking_service: Arc<dyn RankingServiceContract>
     ) -> Self {
         Self { matchmaking_queue_repository, player_status_service, ranking_service }
     }

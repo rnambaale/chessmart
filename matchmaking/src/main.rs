@@ -1,9 +1,9 @@
 use std::{str::FromStr, sync::Arc};
 
-use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse, primitives::GameType};
+use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountRankingRequest, GetAccountRankingResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RankingService, RankingServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse, primitives::GameType};
 use tonic::transport::Server;
 
-use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceImpl}, ranking::MyRankingService}};
+use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceImpl}, ranking::{MyRankingService, RankingServiceContract}}};
 
 pub mod services;
 mod config;
@@ -122,6 +122,37 @@ impl MatchmakerService for MyMatchmakerService {
     }
 }
 
+
+pub struct RankingGatewayService {
+    ranking_service: Arc<dyn RankingServiceContract>,
+}
+
+impl RankingGatewayService {
+    pub fn new(
+        ranking_service: Arc<dyn RankingServiceContract>,
+    ) -> Self {
+        Self {
+            ranking_service,
+        }
+    }
+}
+
+#[tonic::async_trait]
+impl RankingService for RankingGatewayService {
+    async fn get_account_ranking(
+        &self,
+        request: tonic::Request<GetAccountRankingRequest>,
+    ) -> std::result::Result<
+        tonic::Response<GetAccountRankingResponse>,
+        tonic::Status,
+    > {
+        let GetAccountRankingRequest { account_id } = request.into_inner();
+        let _ranking = self.ranking_service.get_or_create_ranking(&account_id).await?;
+
+        todo!()
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let redis_url = std::env::var("REDIS_URL")
@@ -173,12 +204,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         player_status_service,
     );
 
+    let ranking_gateway_service = RankingGatewayService::new(
+        Arc::new(
+            MyRankingService::new(
+                Arc::new(RankingRepositoryService::new(state.db.clone()))
+            )
+        )
+    );
+
     println!("MatchmakerService gRPC server running on {}", addr);
 
     Server::builder()
         .add_service(MatchmakerServiceServer::new(matchmaker_service))
-        // .add_service(RankingServiceServer::new(ranking_service))
-        // .add_service(RankingServiceServer::new(MyRankingService))
+        .add_service(RankingServiceServer::new(ranking_gateway_service))
         .serve(addr)
         .await?;
 
