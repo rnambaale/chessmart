@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+argon2 = { workspace = true }
 prost = { workspace = true }
 tonic = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -11,6 +12,7 @@ sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "tls-rustls"
 prost-types = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp"] }
 thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 uuid = { workspace = true, features = ["serde", "v4"] }
 
 [build-dependencies]

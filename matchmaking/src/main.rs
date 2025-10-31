@@ -155,10 +155,6 @@ impl RankingService for RankingGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let redis_url = std::env::var("REDIS_URL")
-        .unwrap_or_else(|_| "redis://localhost:6379".to_string());
-    println!("Connecting to Redis at: {}", redis_url);
-
     let ApiConfig {
         server,
         database,
