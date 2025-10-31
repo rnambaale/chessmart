@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use shared::error::BunnyChessApiError;
-use sqlx::types::Uuid;
+use uuid::Uuid;
 
 use crate::{repositories::ranking_repository::RankingRepository};
 

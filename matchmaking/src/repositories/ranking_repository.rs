@@ -2,7 +2,7 @@
 use std::str::FromStr;
 
 use shared::error::BunnyChessApiError;
-use sqlx::types::Uuid;
+use uuid::Uuid;
 
 use crate::{database::{Database, postgres::PostgresDB}, services::ranking_service::Ranking};
 
@@ -18,12 +18,6 @@ pub trait RankingRepository: Send + Sync {
         ranking: &Ranking,
     ) -> Result<(), BunnyChessApiError>;
 }
-
-// pub struct RankingInsert {
-//     pub account_id: String,
-//     pub ranked_mmr: u16,
-//     pub normal_mmr: u16,
-// }
 
 // pub struct RankingUpdate {
 //     pub game_id: String,
