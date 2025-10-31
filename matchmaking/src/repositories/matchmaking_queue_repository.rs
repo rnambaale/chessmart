@@ -71,7 +71,7 @@ pub struct QueueConfig {
 
 // Trait defining matchmaking operations
 #[async_trait::async_trait]
-pub trait MatchmakingQueue: Send + Sync {
+pub trait MatchmakingQueueContract: Send + Sync {
     async fn match_players_in_queue(
         &self,
         game_type: &GameType,
@@ -148,7 +148,7 @@ impl RedisMatchmakingQueue {
 }
 
 #[async_trait::async_trait]
-impl MatchmakingQueue for RedisMatchmakingQueue {
+impl MatchmakingQueueContract for RedisMatchmakingQueue {
     async fn match_players_in_queue(
         &self,
         game_type: &GameType,

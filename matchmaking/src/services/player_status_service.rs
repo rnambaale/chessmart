@@ -13,15 +13,15 @@ pub struct MatchMakingStatus {
 }
 
 #[async_trait::async_trait]
-pub trait PlayerStatusService: Send + Sync {
+pub trait PlayerStatusServiceContract: Send + Sync {
     async fn get_player_status(&self, account_id: &str) -> Result<MatchMakingStatus, BunnyChessApiError>;
 }
 
-pub struct PlayerStatusServiceImpl {
+pub struct PlayerStatusService {
     pub player_status_repository: Arc<dyn PlayerStatusRepository>,
 }
 
-impl PlayerStatusServiceImpl {
+impl PlayerStatusService {
     pub fn new(player_status_repository: Arc<dyn PlayerStatusRepository>) -> Self {
         Self {
             player_status_repository,
@@ -30,7 +30,7 @@ impl PlayerStatusServiceImpl {
 }
 
 #[async_trait::async_trait]
-impl PlayerStatusService for PlayerStatusServiceImpl  {
+impl PlayerStatusServiceContract for PlayerStatusService  {
     async fn get_player_status(&self, account_id: &str) -> Result<MatchMakingStatus, BunnyChessApiError> {
         self.player_status_repository.get_player_status(account_id).await
     }

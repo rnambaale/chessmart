@@ -4,7 +4,7 @@ use std::str::FromStr;
 use shared::error::BunnyChessApiError;
 use sqlx::types::Uuid;
 
-use crate::{database::{Database, postgres::PostgresDB}, services::ranking::Ranking};
+use crate::{database::{Database, postgres::PostgresDB}, services::ranking_service::Ranking};
 
 #[async_trait::async_trait]
 pub trait RankingRepository: Send + Sync {

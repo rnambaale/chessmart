@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::Arc};
 use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountRankingRequest, GetAccountRankingResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RankingService, RankingServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse, primitives::GameType};
 use tonic::transport::Server;
 
-use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceImpl}, ranking::{MyRankingService, RankingServiceContract}}};
+use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusServiceContract, PlayerStatusService}, ranking_service::{MyRankingService, RankingServiceContract}}};
 
 pub mod services;
 mod config;
@@ -17,14 +17,14 @@ pub struct MyMatchmakerService {
     // redis: Arc<RedisDB>,
     // state: Arc<AppState>,
     matchmaking_queue_service: MatchmakingQueueService,
-    player_status_service: PlayerStatusServiceImpl,
+    player_status_service: PlayerStatusService,
 }
 
 impl MyMatchmakerService {
     pub fn new(
         // state: Arc<AppState>,
         matchmaking_queue_service: MatchmakingQueueService,
-        player_status_service: PlayerStatusServiceImpl,
+        player_status_service: PlayerStatusService,
     ) -> Self {
         Self {
             // state,
@@ -183,7 +183,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matchmaking_queue_service = MatchmakingQueueService::new(
         Arc::new(RedisMatchmakingQueue::new(state.redis.clone())),
         Arc::new(
-            PlayerStatusServiceImpl::new(Arc::new(player_status_repository))
+            PlayerStatusService::new(Arc::new(player_status_repository))
         ),
         Arc::new(MyRankingService::new(
             Arc::new(
@@ -192,7 +192,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
     );
 
-    let player_status_service = PlayerStatusServiceImpl::new(
+    let player_status_service = PlayerStatusService::new(
         Arc::new(
             PlayerStatusRepositoryService::new(state.redis.clone())
         )
