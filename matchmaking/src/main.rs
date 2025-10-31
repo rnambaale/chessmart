@@ -5,7 +5,7 @@ use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequ
 use tonic::transport::Server;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::{config::{ApiConfig, TracingConfig}, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceContract}, ranking_service::{MyRankingService, RankingServiceContract}}};
+use crate::{config::{ApiConfig, TracingConfig}, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceContract}, ranking_service::{MyRankingService, Ranking, RankingServiceContract}}};
 
 pub mod services;
 mod config;
@@ -14,22 +14,17 @@ mod database;
 mod server;
 mod repositories;
 
-// #[derive(Debug, Default)]
 pub struct MatchmakerGatewayService {
-    // redis: Arc<RedisDB>,
-    // state: Arc<AppState>,
     matchmaking_queue_service: MatchmakingQueueService,
     player_status_service: PlayerStatusService,
 }
 
 impl MatchmakerGatewayService {
     pub fn new(
-        // state: Arc<AppState>,
         matchmaking_queue_service: MatchmakingQueueService,
         player_status_service: PlayerStatusService,
     ) -> Self {
         Self {
-            // state,
             matchmaking_queue_service,
             player_status_service,
         }
@@ -149,9 +144,14 @@ impl RankingService for RankingGatewayService {
         tonic::Status,
     > {
         let GetAccountRankingRequest { account_id } = request.into_inner();
-        let _ranking = self.ranking_service.get_or_create_ranking(&account_id).await?;
+        let ranking: Ranking = self.ranking_service.get_or_create_ranking(&account_id).await?;
 
-        todo!()
+        Ok(tonic::Response::new(
+            GetAccountRankingResponse {
+                ranked_mmr: ranking.ranked_mmr as f32,
+                normal_mmr: ranking.normal_mmr as f32
+            }
+        ))
     }
 }
 
