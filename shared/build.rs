@@ -7,13 +7,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let matchmaker_proto_file = proto_dir.join("matchmaker.proto");
     let ranking_proto_file = proto_dir.join("ranking.proto");
+    let account_proto_file = proto_dir.join("account.proto");
 
     let out_dir = std::path::Path::new(&manifest_dir).join("src/generated");
     std::fs::create_dir_all(&out_dir)?;
 
     tonic_build::configure()
         .out_dir(out_dir)
-        .compile(&[matchmaker_proto_file, ranking_proto_file], &[proto_dir])?;
+        .compile(&[matchmaker_proto_file, ranking_proto_file, account_proto_file], &[proto_dir])?;
 
     Ok(())
 }

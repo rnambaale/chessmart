@@ -8,6 +8,7 @@ prost = { workspace = true }
 tonic = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "tls-rustls", "migrate", "macros", "uuid", "chrono"] }
+prost-types = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp"] }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
