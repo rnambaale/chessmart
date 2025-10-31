@@ -78,24 +78,9 @@ impl RedisConfig {
   }
 }
 
-#[derive(Debug, Clone, Parser, Default)]
-pub struct TokenSecretConfig {
-    #[clap(long, env = "ACCESS_TOKEN_PRIVATE_KEY")]
-    pub access_token_private_key: String,
-
-    #[clap(long, env = "ACCESS_TOKEN_PUBLIC_KEY")]
-    pub access_token_public_key: String,
-
-    #[clap(long, env = "REFRESH_TOKEN_PRIVATE_KEY")]
-    pub refresh_token_private_key: String,
-
-    #[clap(long, env = "REFRESH_TOKEN_PUBLIC_KEY")]
-    pub refresh_token_public_key: String,
-}
-
 #[derive(Debug, Clone, Parser)]
 pub struct ServerConfig {
-    #[clap(long, default_value = "[::]:3338", env = "HOST_PORT")]
+    #[clap(long, default_value = "[::]:50052", env = "HOST_PORT")]
     pub host_port: SocketAddr,
 
     #[clap(long, env = "API_PREFIX")]
@@ -105,7 +90,7 @@ pub struct ServerConfig {
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            host_port: "[::]:3338".to_string().parse().expect("invalid host port"),
+            host_port: "[::]:50052".to_string().parse().expect("invalid host port"),
             api_prefix: None,
         }
     }
@@ -123,17 +108,15 @@ pub struct ApiConfig {
     pub tracing: Option<TracingConfig>,
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
-    pub token_secret: TokenSecretConfig,
 }
 
-impl From<(Opts, TokenSecretConfig)> for ApiConfig {
-    fn from((opts, token_secret): (Opts, TokenSecretConfig)) -> Self {
+impl From<Opts> for ApiConfig {
+    fn from(opts: Opts) -> Self {
         Self {
             server: opts.server,
             tracing: opts.tracing,
             database: opts.database,
             redis: opts.redis,
-            token_secret
         }
     }
 }
@@ -142,9 +125,7 @@ impl ApiConfig {
     pub fn read_config_with_defaults() -> Self {
         let opts: Opts = Opts::parse();
 
-        let token_secret_config: TokenSecretConfig = TokenSecretConfig::parse();
-
-        (opts, token_secret_config).into()
+        opts.into()
     }
 }
 
@@ -155,14 +136,12 @@ impl ApiConfig {
         database: DatabaseConfig,
         tracing: Option<TracingConfig>,
         redis: RedisConfig,
-        token_secret: TokenSecretConfig,
     ) -> Self {
         Self {
             server,
             database,
             tracing,
             redis,
-            token_secret,
         }
     }
 }

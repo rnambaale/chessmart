@@ -160,7 +160,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         database,
         tracing,
         redis,
-        token_secret,
     } = ApiConfig::read_config_with_defaults();
 
     let state: AppState = AppStateBuilder::new()
@@ -168,11 +167,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_db(Some(database))
         .with_tracing(tracing)
         .with_redis(Some(redis))
-        .with_token_secret(Some(token_secret))
         .build()
         .await?;
 
-    let addr = "[::1]:50052".parse()?;
+    // let addr = server.host_port.clone();
+    // let addr = "[::1]:50052".parse()?;
+    let addr = state.config.server.host_port;
 
     let player_status_repository = PlayerStatusRepositoryService::new(state.redis.clone());
 

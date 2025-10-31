@@ -50,37 +50,6 @@ impl PlayerStatusRepositoryService {
 
 #[async_trait::async_trait]
 impl PlayerStatusRepository for PlayerStatusRepositoryService {
-    // async fn get_player_status(
-    //     &self,
-    //     account_id: &str,
-    // ) -> Result<MatchMakingStatus, BunnyChessApiError> {
-    //     let account_status_key = Self::get_account_status_key(account_id);
-
-    //     let mut conn = self.client.get_multiplexed_async_connection().await?;
-
-    //     let result: redis::RedisResult<HashMap<String, String>> =
-    //         redis::cmd("HGETALL")
-    //             .arg(&account_status_key)
-    //             .query_async(&mut conn)
-    //             .await;
-
-    //     match result {
-    //         Ok(data) => {
-    //             if data.is_empty() {
-    //                 Ok(MatchMakingStatus {
-    //                     status: PlayerStatus::Undefined,
-    //                     game_type: None,
-    //                     ranked: None,
-    //                     game_id: None,
-    //                 })
-    //             } else {
-    //                 Ok(self.map_redis_data_to_status(data))
-    //             }
-    //         }
-    //         Err(e) => Err(BunnyChessApiError::RedisError(e)),
-    //     }
-    // }
-
     async fn get_player_status(
         &self,
         account_id: &str,
