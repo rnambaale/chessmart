@@ -1,9 +1,11 @@
 use std::{str::FromStr, sync::Arc};
 
+use opentelemetry_otlp::WithExportConfig;
 use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequestPb, AddToQueueResponse, GetAccountRankingRequest, GetAccountRankingResponse, GetAccountStatusRequest, GetAccountStatusResponse, GetQueueSizesRequest, GetQueueSizesResponse, MatchmakerService, MatchmakerServiceServer, RankingService, RankingServiceServer, RemoveFromQueueRequest, RemoveFromQueueResponse, primitives::GameType};
 use tonic::transport::Server;
+use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::{config::ApiConfig, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusServiceContract, PlayerStatusService}, ranking_service::{MyRankingService, RankingServiceContract}}};
+use crate::{config::{ApiConfig, TracingConfig}, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceContract}, ranking_service::{MyRankingService, RankingServiceContract}}};
 
 pub mod services;
 mod config;
@@ -155,12 +157,19 @@ impl RankingService for RankingGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    match dotenvy::dotenv() {
+        Ok(path) => println!(".env read successfully from {}", path.display()),
+        Err(e) => panic!("Could not load .env file: {e}"),
+    };
+
     let ApiConfig {
         server,
         database,
         tracing,
         redis,
     } = ApiConfig::read_config_with_defaults();
+
+    init_tracing(tracing.clone())?;
 
     let state: AppState = AppStateBuilder::new()
         .with_server(Some(server))
@@ -216,5 +225,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .serve(addr)
         .await?;
 
+    Ok(())
+}
+
+fn init_tracing(tr: Option<TracingConfig>) -> anyhow::Result<()> {
+    let otlp_tracer = if tr.is_some() {
+        let tracer = opentelemetry_otlp::new_pipeline()
+            .tracing()
+            .with_exporter(
+                opentelemetry_otlp::new_exporter().http().with_endpoint(
+                    tr.unwrap_or_default()
+                        .endpoint
+                        .expect("No endpoint for tracing found"),
+                ),
+            )
+            .with_trace_config(
+                opentelemetry_sdk::trace::config()
+                    .with_sampler(opentelemetry_sdk::trace::Sampler::AlwaysOn)
+                    .with_resource(opentelemetry_sdk::Resource::new(vec![opentelemetry::KeyValue::new(
+                        "service.name",
+                        "bunny-chess matchmaker",
+                    )])),
+            )
+            .install_batch(opentelemetry_sdk::runtime::Tokio)?;
+        Some(tracing_opentelemetry::layer().with_tracer(tracer))
+    } else {
+        None
+    };
+
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(EnvFilter::from_default_env())
+        .with(otlp_tracer)
+        .try_init()?;
     Ok(())
 }

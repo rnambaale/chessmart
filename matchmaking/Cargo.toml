@@ -4,9 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = { workspace = true, features = ["backtrace"] }
 async-trait = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["env", "derive"] }
+dotenvy = { workspace = true }
+opentelemetry = { workspace = true }
+opentelemetry-otlp = { workspace = true, features = ["http-proto", "reqwest-client"] }
+opentelemetry_sdk = { workspace = true, features = ["rt-tokio"] }
 prost = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp"] }
 shared = { path = "../shared" }
@@ -15,4 +20,6 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"]}
 tonic = { workspace = true }
 tower = { workspace = true }
 tracing = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
 uuid = { workspace = true, features = ["serde", "v4"] }
