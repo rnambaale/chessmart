@@ -1,8 +1,8 @@
 use shared::{AccountServiceServer, FindAccountRequest, LoginRequest, LoginResponse, RefreshRequest, RegisterRequest};
 use tonic::transport::Server;
+use prost_types::Timestamp;
 
 use crate::{config::ApiConfig, repositories::account_repository::{Account, AccountRepository}, server::state::{AppState, AppStateBuilder}, services::account_service::AccountService, utils::timestamps::TimestampExt};
-use prost_types::Timestamp;
 
 pub mod services;
 pub mod repositories;

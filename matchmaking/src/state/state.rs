@@ -1,4 +1,3 @@
-
 use shared::error::BunnyChessApiError;
 
 use crate::{client::{database::{Database, PostgresDB}, redis::{RedisClient, RedisDB}}, config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TracingConfig}};

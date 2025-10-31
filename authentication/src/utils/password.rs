@@ -1,6 +1,7 @@
-use super::hash;
 use shared::error::BunnyChessApiError;
 use tracing::debug;
+
+use super::hash;
 
 pub async fn hash(password: String) -> Result<String, BunnyChessApiError> {
   let jh = tokio::task::spawn_blocking(move || hash::argon_hash(password));

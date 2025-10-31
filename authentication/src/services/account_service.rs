@@ -1,6 +1,7 @@
 use chrono::Utc;
 use shared::{RegisterRequest, error::BunnyChessApiError};
 use uuid::Uuid;
+
 use crate::repositories::account_repository::{Account, AccountRepository};
 
 pub struct AccountService {

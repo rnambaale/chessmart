@@ -1,5 +1,4 @@
 use std::sync::Arc;
-
 use shared::{error::BunnyChessApiError, primitives::GameType};
 
 use crate::repositories::{matchmaking_queue_repository::PlayerStatus, player_status_repository::{PlayerStatusRepository}};

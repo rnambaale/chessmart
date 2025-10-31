@@ -1,6 +1,4 @@
-
 use std::str::FromStr;
-
 use shared::error::BunnyChessApiError;
 use uuid::Uuid;
 

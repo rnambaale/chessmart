@@ -1,10 +1,8 @@
 use std::collections::HashMap;
-
 use redis::AsyncCommands;
 use shared::error::BunnyChessApiError;
 
 use crate::{repositories::matchmaking_queue_repository::PlayerStatus, services::player_status_service::MatchMakingStatus};
-
 
 #[async_trait::async_trait]
 pub trait PlayerStatusRepository: Send + Sync {

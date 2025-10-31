@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use sqlx::postgres::PgPoolOptions;
+
 use crate::config::DatabaseConfig;
 
 #[async_trait]
