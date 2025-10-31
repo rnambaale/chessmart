@@ -13,14 +13,14 @@ mod server;
 mod repositories;
 
 // #[derive(Debug, Default)]
-pub struct MyMatchmakerService {
+pub struct MatchmakerGatewayService {
     // redis: Arc<RedisDB>,
     // state: Arc<AppState>,
     matchmaking_queue_service: MatchmakingQueueService,
     player_status_service: PlayerStatusService,
 }
 
-impl MyMatchmakerService {
+impl MatchmakerGatewayService {
     pub fn new(
         // state: Arc<AppState>,
         matchmaking_queue_service: MatchmakingQueueService,
@@ -36,7 +36,7 @@ impl MyMatchmakerService {
 
 
 #[tonic::async_trait]
-impl MatchmakerService for MyMatchmakerService {
+impl MatchmakerService for MatchmakerGatewayService {
     async fn add_to_queue(
         &self,
         request: tonic::Request<AddToQueueRequestPb>,
@@ -176,7 +176,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .await?;
 
-    let addr = "[::1]:50051".parse()?;
+    let addr = "[::1]:50052".parse()?;
 
     let player_status_repository = PlayerStatusRepositoryService::new(state.redis.clone());
 
@@ -198,7 +198,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
     );
 
-    let matchmaker_service = MyMatchmakerService::new(
+    let matchmaker_service = MatchmakerGatewayService::new(
         // Arc::new(state),
         matchmaking_queue_service,
         player_status_service,
