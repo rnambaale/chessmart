@@ -14,7 +14,6 @@ pub trait PlayerStatusRepository: Send + Sync {
     ) -> Result<MatchMakingStatus, BunnyChessApiError>;
 }
 
-// #[derive(Clone)]
 pub struct PlayerStatusRepositoryService {
     client: redis::Client,
 }

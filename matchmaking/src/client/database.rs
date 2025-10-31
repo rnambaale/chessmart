@@ -1,9 +1,13 @@
 use async_trait::async_trait;
 use sqlx::postgres::PgPoolOptions;
-
 use crate::config::DatabaseConfig;
 
-use super::Database;
+#[async_trait]
+pub trait Database {
+    type DB: sqlx::Database;
+
+    async fn begin_tx(&self) -> Result<sqlx::Transaction<Self::DB>, sqlx::Error>;
+}
 
 #[derive(Clone)]
 pub struct PostgresDB {

@@ -4,7 +4,7 @@ use std::str::FromStr;
 use shared::error::BunnyChessApiError;
 use uuid::Uuid;
 
-use crate::{database::{Database, postgres::PostgresDB}, services::ranking_service::Ranking};
+use crate::{client::database::{Database, PostgresDB}, services::ranking_service::Ranking};
 
 #[async_trait::async_trait]
 pub trait RankingRepository: Send + Sync {
@@ -18,14 +18,6 @@ pub trait RankingRepository: Send + Sync {
         ranking: &Ranking,
     ) -> Result<(), BunnyChessApiError>;
 }
-
-// pub struct RankingUpdate {
-//     pub game_id: String,
-//     pub game_type: String,
-//     pub ranked:bool,
-//     pub account_id: String,
-//     pub mmr_change: u16,
-// }
 
 pub struct RankingRepositoryService {
     client: PostgresDB,

@@ -69,7 +69,6 @@ pub struct QueueConfig {
     pub max_mmr_delta: i32,
 }
 
-// Trait defining matchmaking operations
 #[async_trait::async_trait]
 pub trait MatchmakingQueueContract: Send + Sync {
     async fn match_players_in_queue(
@@ -104,7 +103,6 @@ pub const MATCH_PLAYERS_SCRIPT: &str = include_str!("lua-scripts/match-players.l
 pub const ADD_PLAYER_TO_QUEUE_SCRIPT: &str = include_str!("lua-scripts/add-player-to-queue.lua");
 pub const REMOVE_PLAYER_FROM_QUEUE_SCRIPT: &str = include_str!("lua-scripts/remove-player-from-queue.lua");
 
-// Redis implementation
 pub struct RedisMatchmakingQueue {
     client: redis::Client,
     scripts: Arc<Mutex<HashMap<String, redis::Script>>>,
@@ -114,7 +112,6 @@ impl RedisMatchmakingQueue {
     pub fn new(client: redis::Client) -> Self {
         let mut scripts = HashMap::new();
 
-        // Pre-define scripts (similar to NestJS constructor)
         scripts.insert(
             "matchPlayers".to_string(),
             redis::Script::new(MATCH_PLAYERS_SCRIPT),

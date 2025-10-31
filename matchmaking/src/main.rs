@@ -9,10 +9,9 @@ use crate::{config::{ApiConfig, TracingConfig}, repositories::{matchmaking_queue
 
 pub mod services;
 mod config;
-mod redis;
-mod database;
 mod state;
 mod repositories;
+mod client;
 
 pub struct MatchmakerGatewayService {
     matchmaking_queue_service: MatchmakingQueueService,
