@@ -182,18 +182,24 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 name = "authentication"
 version = "0.1.0"
 dependencies = [
+ "argon2",
  "async-trait",
  "chrono",
  "clap",
+ "fake",
  "jsonwebtoken",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
+ "prost-types",
  "redis",
+ "serde",
  "shared",
  "sqlx",
  "tokio",
+ "tonic 0.10.2",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -3037,12 +3043,14 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "argon2",
  "prost",
  "prost-types",
  "redis",
  "serde",
  "sqlx",
  "thiserror 2.0.17",
+ "tokio",
  "tonic 0.10.2",
  "tonic-build",
  "uuid",
