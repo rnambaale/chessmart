@@ -5,13 +5,13 @@ use shared::{AcceptPendingGameRequest, AcceptPendingGameResponse, AddToQueueRequ
 use tonic::transport::Server;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::{config::{ApiConfig, TracingConfig}, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, server::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceContract}, ranking_service::{MyRankingService, Ranking, RankingServiceContract}}};
+use crate::{config::{ApiConfig, TracingConfig}, repositories::{matchmaking_queue_repository::RedisMatchmakingQueue, player_status_repository::PlayerStatusRepositoryService, ranking_repository::RankingRepositoryService}, state::state::{AppState, AppStateBuilder}, services::{matchmaking_queue_service::{AddToQueue, MatchmakingQueueService}, player_status_service::{MatchMakingStatus, PlayerStatusService, PlayerStatusServiceContract}, ranking_service::{MyRankingService, Ranking, RankingServiceContract}}};
 
 pub mod services;
 mod config;
 mod redis;
 mod database;
-mod server;
+mod state;
 mod repositories;
 
 pub struct MatchmakerGatewayService {
