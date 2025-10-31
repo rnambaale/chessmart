@@ -81,6 +81,14 @@ impl MatchmakingQueueService {
             ranked,
         ).await?;
 
+
+        tracing::debug!(
+            "Player {} added to {} {} queue",
+            &account_id.as_str(),
+            if ranked { "ranked" } else { "normal" },
+            game_type.to_str()
+        );
+
         Ok(())
     }
 
@@ -107,6 +115,13 @@ impl MatchmakingQueueService {
             game_type,
             ranked
         ).await?;
+
+        tracing::debug!(
+           "Player {} removed from {} {} queue",
+           account_id,
+           if ranked { "ranked" } else { "normal" },
+           game_type.to_str()
+        );
 
         Ok(())
     }
