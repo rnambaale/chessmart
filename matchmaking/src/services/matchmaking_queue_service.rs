@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use shared::{QueueSize, error::BunnyChessApiError, primitives::GameType};
 
-use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus, QueueType}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingService}};
+use crate::{repositories::matchmaking_queue_repository::{MatchmakingQueue, PlayerStatus, QueueConfig, QueueType}, services::{player_status_service::{MatchMakingStatus, PlayerStatusService}, ranking::RankingService}};
 
 pub struct AddToQueue {
     pub account_id: String,
@@ -26,22 +26,35 @@ impl MatchmakingQueueService {
         Self { matchmaking_queue_repository, player_status_service, ranking_service }
     }
 
-    // pub async fn match_players(
-    //     &self,
-    //     queue_key: &str,
-    //     times_key: &str,
-    //     base_mmr_range: i32,
-    //     mmr_increase_per_second: f64,
-    //     max_mmr_delta: i32,
-    // ) -> RedisResult<Vec<String>> {
-    //     self.redis.match_players(
-    //         queue_key,
-    //         times_key,
-    //         base_mmr_range,
-    //         mmr_increase_per_second,
-    //         max_mmr_delta,
-    //     ).await
-    // }
+    const RANKED_CONFIG: QueueConfig = QueueConfig {
+        base_mmr_range: 50,
+        mmr_range_increase_per_second: 5,
+        max_mmr_delta: 400
+    };
+
+    const NORMAL_CONFIG: QueueConfig = QueueConfig {
+        base_mmr_range: 100,
+        mmr_range_increase_per_second: 10,
+        max_mmr_delta: 600
+    };
+
+    pub async fn match_players(
+        &self,
+        game_type: &GameType,
+        ranked: bool,
+    ) -> redis::RedisResult<Vec<String>> {
+
+        let queue_config = match  ranked {
+            true => Self::RANKED_CONFIG,
+            false => Self::NORMAL_CONFIG
+        };
+
+        self.matchmaking_queue_repository.match_players_in_queue(
+            game_type,
+            ranked,
+            &queue_config,
+        ).await
+    }
 
     pub async fn add_player_to_queue(
         &self,
