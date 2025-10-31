@@ -1,4 +1,3 @@
-use redis::{RedisResult, Script, ToRedisArgs};
 use shared::QueueSize;
 use shared::error::BunnyChessApiError;
 use shared::primitives::GameType;
@@ -27,7 +26,7 @@ impl PlayerStatus {
     }
 }
 
-impl ToRedisArgs for PlayerStatus {
+impl redis::ToRedisArgs for PlayerStatus {
     fn write_redis_args<W>(&self, out: &mut W)
     where
         W: ?Sized + redis::RedisWrite,
@@ -82,14 +81,14 @@ pub trait MatchmakingQueue: Send + Sync {
         mmr: u16,
         game_type: &GameType,
         ranked: bool
-    ) -> RedisResult<()>;
+    ) -> redis::RedisResult<()>;
 
     async fn remove_player_from_queue(
         &self,
         account_id: &str,
         game_type: GameType,
         ranked: bool,
-    ) -> RedisResult<i32>;
+    ) -> redis::RedisResult<i32>;
 
     async fn get_queue_sizes(
         &self,
@@ -104,7 +103,7 @@ pub const REMOVE_PLAYER_FROM_QUEUE_SCRIPT: &str = include_str!("lua-scripts/remo
 // Redis implementation
 pub struct RedisMatchmakingQueue {
     client: redis::Client,
-    scripts: Arc<Mutex<HashMap<String, Script>>>,
+    scripts: Arc<Mutex<HashMap<String, redis::Script>>>,
 }
 
 impl RedisMatchmakingQueue {
@@ -118,11 +117,11 @@ impl RedisMatchmakingQueue {
         // );
         scripts.insert(
             "addPlayerToQueue".to_string(),
-            Script::new(ADD_PLAYER_TO_QUEUE_SCRIPT),
+            redis::Script::new(ADD_PLAYER_TO_QUEUE_SCRIPT),
         );
         scripts.insert(
             "removePlayerFromQueue".to_string(),
-            Script::new(REMOVE_PLAYER_FROM_QUEUE_SCRIPT),
+            redis::Script::new(REMOVE_PLAYER_FROM_QUEUE_SCRIPT),
         );
 
         Self {
@@ -179,7 +178,7 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
         mmr: u16,
         game_type: &GameType,
         ranked: bool
-    ) -> RedisResult<()> {
+    ) -> redis::RedisResult<()> {
         let scripts = self.scripts.lock().await;
         let script = scripts.get("addPlayerToQueue")
             .ok_or_else(|| redis::RedisError::from((
@@ -191,7 +190,7 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
         let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
         let player_status = PlayerStatus::Searching;
 
-        script
+        let result: () = script
             .key(&queue_keys.queue_key)
             .key(&queue_keys.times_key)
             .key(&account_status_key)
@@ -202,7 +201,7 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
             .invoke_async(&mut self.client.get_multiplexed_async_connection().await?)
             .await?;
 
-        Ok(())
+        Ok(result)
     }
 
     async fn remove_player_from_queue(
@@ -210,7 +209,7 @@ impl MatchmakingQueue for RedisMatchmakingQueue {
         account_id: &str,
         game_type: GameType,
         ranked: bool,
-    ) -> RedisResult<i32> {
+    ) -> redis::RedisResult<i32> {
 
         let account_status_key = PlayerStatusRepositoryService::get_account_status_key(account_id);
         let queue_keys = Self::get_queue_keys(&game_type, ranked);
