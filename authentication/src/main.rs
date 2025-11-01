@@ -1,26 +1,27 @@
-use shared::{AccountServiceServer, FindAccountRequest, LoginRequest, LoginResponse, RefreshRequest, RegisterRequest};
+use shared::{AccountServiceServer, FindAccountRequest, LoginRequest, RefreshRequest, RegisterRequest};
 use tonic::transport::Server;
 use prost_types::Timestamp;
 
-use crate::{config::ApiConfig, repositories::account_repository::{Account, AccountRepository}, server::state::{AppState, AppStateBuilder}, services::account_service::AccountService, utils::timestamps::TimestampExt};
+use crate::{config::ApiConfig, database::user::Account, dtos::response::LoginResponseDto, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
 
 pub mod services;
-pub mod repositories;
 pub mod database;
 pub mod redis;
 mod config;
-mod server;
+mod state;
 pub mod utils;
+pub mod constants;
+pub mod dtos;
 
 pub struct AccountGatewayService {
-    account_service: AccountService
+    state: AppState
 }
 
 impl AccountGatewayService {
     pub fn new(
-        account_service: AccountService
+        state: AppState
     ) -> Self {
-        Self { account_service }
+        Self { state }
     }
 }
 
@@ -38,7 +39,7 @@ impl shared::AccountService for AccountGatewayService {
             created_at,
             last_login_at,
             ..
-        } = self.account_service.register(request.into_inner()).await?;
+        } = crate::services::account_service::register(&self.state, request.into_inner()).await?;
 
         let last_login_at = match last_login_at {
             Some(login_at) => Some(Timestamp::from_chrono(login_at)),
@@ -57,15 +58,27 @@ impl shared::AccountService for AccountGatewayService {
 
     async fn login(
         &self,
-        _request: tonic::Request<LoginRequest>,
-    ) -> std::result::Result<tonic::Response<LoginResponse>, tonic::Status> {
-        todo!()
+        request: tonic::Request<LoginRequest>,
+    ) -> std::result::Result<tonic::Response<shared::LoginResponse>, tonic::Status> {
+        let LoginResponseDto {
+            jwt_expires_in,
+            jwt_refresh,
+            jwt,
+            jwt_refresh_expires_in,
+        } = crate::services::account_service::login(&self.state, request.into_inner()).await?;
+
+        Ok(tonic::Response::new(shared::LoginResponse{
+            jwt,
+            jwt_expires: Some(Timestamp::from_chrono(jwt_expires_in)),
+            jwt_refresh,
+            jwt_refresh_expires: Some(Timestamp::from_chrono(jwt_refresh_expires_in))
+        }))
     }
 
     async fn refresh(
         &self,
         _request: tonic::Request<RefreshRequest>,
-    ) -> std::result::Result<tonic::Response<LoginResponse>, tonic::Status> {
+    ) -> std::result::Result<tonic::Response<shared::LoginResponse>, tonic::Status> {
         todo!()
     }
 
@@ -102,7 +115,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     let account_service = AccountGatewayService::new(
-        AccountService::new(AccountRepository::new(state.db.clone()))
+        state
     );
 
     Server::builder()

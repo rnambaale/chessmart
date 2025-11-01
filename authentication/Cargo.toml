@@ -17,6 +17,7 @@ prost-types = { workspace = true }
 shared = { path = "../shared" }
 redis = { workspace = true, features = ["tokio-comp"] }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "tls-rustls", "migrate", "macros", "uuid", "chrono"] }
 tokio = { workspace = true, features = ["full"] }
 tonic = { workspace = true }
