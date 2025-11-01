@@ -1,8 +1,9 @@
-use shared::{AccountServiceServer, FindAccountRequest, LoginRequest, RefreshRequest, RegisterRequest};
+use shared::AccountServiceServer;
 use tonic::transport::Server;
 use prost_types::Timestamp;
+use tracing::{info, warn};
 
-use crate::{config::ApiConfig, database::user::Account, dtos::response::LoginResponseDto, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
+use crate::{config::ApiConfig, database::user::Account, dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto}}, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
 
 pub mod services;
 pub mod database;
@@ -29,8 +30,17 @@ impl AccountGatewayService {
 impl shared::AccountService for AccountGatewayService {
     async fn register(
         &self,
-        request: tonic::Request<RegisterRequest>,
+        request: tonic::Request<shared::RegisterRequest>,
     ) -> Result<tonic::Response<shared::Account>, tonic::Status> {
+        let shared::RegisterRequest {
+            email,
+            username,
+            password,
+            is_admin: _,
+        } = request.into_inner();
+
+        let request = RegisterRequestDto { email, username, password };
+
         let Account {
             id,
             email,
@@ -39,7 +49,7 @@ impl shared::AccountService for AccountGatewayService {
             created_at,
             last_login_at,
             ..
-        } = crate::services::account_service::register(&self.state, request.into_inner()).await?;
+        } = crate::services::account_service::register(&self.state, &request).await?;
 
         let last_login_at = match last_login_at {
             Some(login_at) => Some(Timestamp::from_chrono(login_at)),
@@ -58,16 +68,23 @@ impl shared::AccountService for AccountGatewayService {
 
     async fn login(
         &self,
-        request: tonic::Request<LoginRequest>,
+        request: tonic::Request<shared::LoginRequest>,
     ) -> std::result::Result<tonic::Response<shared::LoginResponse>, tonic::Status> {
+        let shared::LoginRequest {
+            email,
+            password
+        } = request.into_inner();
+
+        let request = LoginRequestDto { email, password };
+
         let LoginResponseDto {
             jwt_expires_in,
             jwt_refresh,
             jwt,
             jwt_refresh_expires_in,
-        } = crate::services::account_service::login(&self.state, request.into_inner()).await?;
+        } = crate::services::account_service::login(&self.state, &request).await?;
 
-        Ok(tonic::Response::new(shared::LoginResponse{
+        Ok(tonic::Response::new(shared::LoginResponse {
             jwt,
             jwt_expires: Some(Timestamp::from_chrono(jwt_expires_in)),
             jwt_refresh,
@@ -77,14 +94,39 @@ impl shared::AccountService for AccountGatewayService {
 
     async fn refresh(
         &self,
-        _request: tonic::Request<RefreshRequest>,
+        request: tonic::Request<shared::RefreshRequest>,
     ) -> std::result::Result<tonic::Response<shared::LoginResponse>, tonic::Status> {
-        todo!()
+        let shared::RefreshRequest { jwt_refresh } = request.into_inner();
+
+        let request = RefreshTokenRequestDto { token: jwt_refresh };
+
+        match crate::services::token::refresh(&self.state, &request).await {
+            Ok(response) => {
+                info!("Success refresh token user response: {response:?}.");
+                let LoginResponseDto {
+                    jwt_expires_in,
+                    jwt_refresh,
+                    jwt,
+                    jwt_refresh_expires_in,
+                } = response;
+
+                Ok(tonic::Response::new(shared::LoginResponse {
+                    jwt,
+                    jwt_expires: Some(Timestamp::from_chrono(jwt_expires_in)),
+                    jwt_refresh,
+                    jwt_refresh_expires: Some(Timestamp::from_chrono(jwt_refresh_expires_in))
+                }))
+            }
+            Err(e) => {
+                warn!("Unsuccessfully refresh token error: {e:?}.");
+                return Err(e.into());
+            }
+        }
     }
 
     async fn find_account(
         &self,
-        _request: tonic::Request<FindAccountRequest>,
+        _request: tonic::Request<shared::FindAccountRequest>,
     ) -> std::result::Result<tonic::Response<shared::Account>, tonic::Status> {
         todo!()
     }

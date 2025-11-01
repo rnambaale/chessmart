@@ -1,23 +1,24 @@
 use chrono::Utc;
-use shared::{LoginRequest, RegisterRequest, error::BunnyChessApiError};
+use shared::error::BunnyChessApiError;
+use tracing::info;
 use uuid::Uuid;
 
-use crate::{database::{Database, postgres::PostgresDB, user::Account}, dtos::response::LoginResponseDto, state::state::AppState};
+use crate::{database::{Database, postgres::PostgresDB, user::Account}, dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
 
 pub async fn register(
     state: &AppState,
-    req: RegisterRequest
+    request: &RegisterRequestDto
 ) -> Result<Account, BunnyChessApiError> {
     let mut tx = state.db.begin_tx().await?;
 
-    check_unique_username(&mut tx, &req.username).await?;
-    check_unique_email(&mut tx, &req.email).await?;
+    check_unique_username(&mut tx, &request.username).await?;
+    check_unique_email(&mut tx, &request.email).await?;
 
     let account = Account {
         id: Uuid::new_v4(),
-        email: req.email.to_string(),
-        username: req.username.to_string(),
-        password: crate::utils::password::hash(req.password.to_string()).await?,
+        email: request.email.to_string(),
+        username: request.username.to_string(),
+        password: crate::utils::password::hash(request.password.to_string()).await?,
         is_admin: false,
         last_login_at: None,
         created_at: Utc::now(),
@@ -70,10 +71,10 @@ pub async fn check_unique_email(
 
 pub async fn login(
     state: &AppState,
-    req: LoginRequest
+    request: &LoginRequestDto
 ) -> Result<LoginResponseDto, BunnyChessApiError> {
     let mut tx = state.db.begin_tx().await?;
-    let account = crate::database::user::find_account_by_email(&mut tx, &req.email).await?;
+    let account = crate::database::user::find_account_by_email(&mut tx, &request.email).await?;
 
     if account.is_none() {
         return Err(BunnyChessApiError::EmailNotFoundError("Email not found.".into()));
@@ -81,7 +82,7 @@ pub async fn login(
 
     let account = account.unwrap();
 
-    crate::utils::password::verify(req.password.clone(), account.password.clone()).await?;
+    crate::utils::password::verify(request.password.clone(), account.password.clone()).await?;
 
     crate::database::user::update_last_login(&mut tx, &account).await?;
 
@@ -90,4 +91,11 @@ pub async fn login(
     let session_id = crate::services::session::set(&state.redis, account.id).await?;
     let response = crate::services::token::generate_tokens(account.id, session_id)?;
     Ok(response)
+}
+
+pub async fn logout(state: &AppState, user_id: Uuid) -> Result<(), BunnyChessApiError> {
+    info!("Logout user id: {user_id}");
+    let key = SessionKey { user_id };
+    crate::services::redis::del(&state.redis, &key).await?;
+    Ok(())
 }
