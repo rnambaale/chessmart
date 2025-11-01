@@ -194,6 +194,7 @@ dependencies = [
  "prost-types",
  "redis",
  "serde",
+ "serde_json",
  "shared",
  "sqlx",
  "tokio",
@@ -3051,10 +3052,12 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "argon2",
+ "jsonwebtoken",
  "prost",
  "prost-types",
  "redis",
  "serde",
+ "serde_json",
  "sqlx",
  "thiserror 2.0.17",
  "tokio",
