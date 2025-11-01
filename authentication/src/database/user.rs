@@ -62,6 +62,7 @@ pub async fn insert_account(
     Ok(())
 }
 
+#[instrument(level = "debug", err)]
 pub async fn find_account_by_email(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as crate::database::Database>::DB>,
     email: &str,
@@ -85,6 +86,31 @@ pub async fn find_account_by_email(
         Ok(user) => Ok(user),
         Err(e) => Err(e.into())
     }
+}
+
+#[instrument(level = "debug", err)]
+pub async fn find_account_by_username(
+    tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
+    username: &str
+) -> Result<Option<Account>, BunnyChessApiError> {
+    let user = sqlx::query!(
+        "SELECT id, username, email, password, is_admin, last_login_at, created_at, updated_at FROM users WHERE username = $1",
+        username
+    )
+    .map(|row| Account {
+        id: row.id,
+        username: row.username,
+        email: row.email,
+        password: row.password,
+        is_admin: row.is_admin,
+        last_login_at: row.last_login_at,
+        created_at: row.created_at.unwrap(),
+        updated_at: row.updated_at.unwrap(),
+    })
+    .fetch_optional(&mut **tx)
+    .await?;
+
+    Ok(user)
 }
 
 pub async fn update_last_login(

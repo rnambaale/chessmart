@@ -30,6 +30,9 @@ pub enum BunnyChessApiError {
     #[error("{0}")]
     EmailNotFoundError(String),
 
+    #[error("User already exists")]
+    UserAlreadyExists,
+
     #[error(transparent)]
     ParseJsonError(#[from] serde_json::Error),
 
