@@ -1,13 +1,15 @@
 
+use std::sync::Arc;
+
 use shared::error::BunnyChessApiError;
 
 use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, redis::redis::{RedisClient, RedisDB}};
 
 #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {
-    pub db: DB,
-    pub config: ApiConfig,
-    pub redis: RedisClient,
+    pub db: Arc<DB>,
+    pub config: Arc<ApiConfig>,
+    pub redis: Arc<RedisClient>,
 }
 
 impl<DB> AppState<DB>
@@ -15,6 +17,10 @@ where
     DB: Database,
 {
     pub fn new(db: DB, config: ApiConfig, redis: RedisClient) -> Self {
+        let db = Arc::new(db);
+        let config = Arc::new(config);
+        let redis = Arc::new(redis);
+
         Self {
             db,
             config,
