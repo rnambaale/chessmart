@@ -25,6 +25,22 @@ pub enum BunnyChessApiError {
 
     #[error("Task execution error: {0}")]
     SpawnTaskError(#[from] tokio::task::JoinError),
+
+    // Auth errors
+    #[error("{0}")]
+    EmailNotFoundError(String),
+
+    #[error(transparent)]
+    ParseJsonError(#[from] serde_json::Error),
+
+    #[error("Session not found error {0}")]
+    SessionNotFoundError(String),
+
+    #[error("{0}")]
+    InvalidSessionError(String),
+
+    #[error(transparent)]
+    JwtError(#[from] jsonwebtoken::errors::Error),
 }
 
 impl From<BunnyChessApiError> for tonic::Status {
