@@ -93,9 +93,6 @@ impl shared::AccountService for AccountGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse()?;
-
-    println!("AuthenticationService gRPC server running on {}", addr);
 
     let ApiConfig {
         server,
@@ -113,6 +110,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_token_secret(Some(token_secret))
         .build()
         .await?;
+
+    // let addr = "[::1]:50051".parse()?;
+    let addr = state.config.server.host_port;
+
+    println!("AuthenticationService gRPC server running on {}", addr);
 
     let account_service = AccountGatewayService::new(
         state

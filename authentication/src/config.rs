@@ -95,7 +95,7 @@ pub struct TokenSecretConfig {
 
 #[derive(Debug, Clone, Parser)]
 pub struct ServerConfig {
-    #[clap(long, default_value = "[::]:3338", env = "HOST_PORT")]
+    #[clap(long, default_value = "[::]:50051", env = "HOST_PORT")]
     pub host_port: SocketAddr,
 
     #[clap(long, env = "API_PREFIX")]
@@ -105,7 +105,7 @@ pub struct ServerConfig {
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            host_port: "[::]:3338".to_string().parse().expect("invalid host port"),
+            host_port: "[::]:50051".to_string().parse().expect("invalid host port"),
             api_prefix: None,
         }
     }
