@@ -55,3 +55,13 @@ pub struct MeResponseDto {
   pub game_id: Option<String>,
   pub mmr: u64,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AccountResponseDto {
+  pub id: String,
+  pub username: String,
+  pub is_admin: bool,
+  pub created_at: Option<DateTime<Utc>>,
+  pub last_login_at: Option<DateTime<Utc>>,
+  pub mmr: u64,
+}

@@ -10,7 +10,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 pub mod state;
 
-use crate::{ dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, routes::authentication::{login, logout, post_register, refresh}, routes::websocket::ws_handler, server::state::AppState, utils::claim::UserClaims};
+use crate::{ dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{AccountResponseDto, LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, routes::{accounts::get_account, authentication::{login, logout, post_register, refresh}, websocket::ws_handler}, server::state::AppState, utils::claim::UserClaims};
 
 pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 
@@ -43,6 +43,7 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
         crate::routes::authentication::login,
         crate::routes::authentication::refresh,
         crate::routes::authentication::logout,
+        crate::routes::accounts::get_account,
     ),
     components(schemas(
         RegisterRequestDto,
@@ -52,6 +53,7 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
         RefreshTokenRequestDto,
         UserClaims,
         MessageResponseDto,
+        AccountResponseDto,
     ))
 )]
 struct ApiDoc;
@@ -68,6 +70,9 @@ fn app(state: AppState) -> Router {
 
         // WebSocket route
         .route("/ws", get(ws_handler))
+
+        // Account routes
+        .route("/accounts/:account_id", get(get_account))
 
         .with_state(state);
 
