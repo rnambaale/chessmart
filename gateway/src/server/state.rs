@@ -1,21 +1,41 @@
+use shared::generated::{account_service::account_service_client::AccountServiceClient, matchmaker_service::matchmaker_service_client::MatchmakerServiceClient, ranking_service::ranking_service_client::RankingServiceClient};
+use tonic::transport::Channel;
+
 use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
+
+type AccountGrpcClient = AccountServiceClient<Channel>;
+type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
+type RankingGrpcClient = RankingServiceClient<Channel>;
 
 #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {
     pub db: DB,
     pub config: ApiConfig,
     pub redis: RedisClient,
+    pub account_client: AccountGrpcClient,
+    pub matchmaking_client: MatchmakingGrpcClient,
+    pub ranking_client: RankingGrpcClient,
 }
 
 impl<DB> AppState<DB>
 where
     DB: Database,
 {
-    pub fn new(db: DB, config: ApiConfig, redis: RedisClient) -> Self {
+    pub fn new(
+        db: DB,
+        config: ApiConfig,
+        redis: RedisClient,
+        account_client: AccountGrpcClient,
+        matchmaking_client: MatchmakingGrpcClient,
+        ranking_client: RankingGrpcClient,
+    ) -> Self {
         Self {
             db,
             config,
             redis,
+            account_client,
+            matchmaking_client,
+            ranking_client,
         }
     }
 }
@@ -75,6 +95,21 @@ impl AppStateBuilder {
 
         let token_secret_config = self.token_secret_config.expect("token-secret-config not set");
 
+        // Initialize account gRPC client
+        let account_channel = Channel::from_static("http://[::1]:50051")
+            .connect()
+            .await?;
+
+        let account_client = AccountServiceClient::new(account_channel);
+
+        // Initialize matchmaking gRPC client
+        let matchmaking_channel = Channel::from_static("http://[::1]:50052")
+            .connect()
+            .await?;
+
+        let matchmaking_client = MatchmakerServiceClient::new(matchmaking_channel.clone());
+        let ranking_client = RankingServiceClient::new(matchmaking_channel.clone());
+
         Ok(AppState::new(
             db,
             ApiConfig::new(
@@ -84,7 +119,10 @@ impl AppStateBuilder {
                 redis_config,
                 token_secret_config,
             ),
-            redis
+            redis,
+            account_client,
+            matchmaking_client,
+            ranking_client,
         ))
     }
 }

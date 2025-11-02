@@ -46,6 +46,9 @@ pub enum BunnyChessApiError {
 
     #[error("{0}")]
     UnauthorizedError(String),
+
+    #[error("{0}")]
+    GrpcError(String),
 }
 
 impl IntoResponse for BunnyChessApiError {
@@ -146,6 +149,12 @@ impl BunnyChessApiError {
         vec![],
         StatusCode::UNAUTHORIZED,
       ),
+      GrpcError(_err) => (
+        "INTERNAL_SERVER_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
     };
 
     (
@@ -177,4 +186,18 @@ impl AppResponseError {
       details,
     }
   }
+}
+
+impl From<tonic::Status> for BunnyChessApiError {
+    fn from(status: tonic::Status) -> Self {
+        eprintln!("gRPC error: {}", status);
+        BunnyChessApiError::GrpcError(status.message().to_string())
+    }
+}
+
+impl From<tonic::transport::Error> for BunnyChessApiError {
+    fn from(error: tonic::transport::Error) -> Self {
+        eprintln!("gRPC error: {}", error);
+        BunnyChessApiError::GrpcError(error.to_string())
+    }
 }
