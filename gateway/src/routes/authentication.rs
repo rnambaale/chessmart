@@ -1,7 +1,8 @@
 use axum::{
     extract::State, Json
 };
-use chrono::Utc;
+use prost_types::Timestamp;
+use shared::primitives::TimestampExt;
 use tracing::{info, instrument, warn};
 
 use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, services, utils::claim::UserClaims};
@@ -19,24 +20,35 @@ use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRe
 #[instrument(name = "post_register", skip(state), err)]
 pub async fn post_register(
     State(state): State<AppState>,
-    Json(req): Json<RegisterRequestDto>,
+    Json(request): Json<RegisterRequestDto>,
 ) -> Result<Json<RegisterResponseDto>, BunnyChessApiError> {
-    match services::authentication::register(state, &req).await {
-        Ok(user_id) => {
-            info!("Successfully register user: {user_id}");
-            let now = Utc::now().timestamp() as u64;
-            let resp = RegisterResponseDto {
-                id: user_id.to_string(),
-                email: req.email,
-                created_at: now.to_string()
-            };
-            Ok(Json(resp))
-        }
-        Err(e) => {
-            warn!("Error encountered while registering user: {e:?}");
-            Err(e)
-        }
-    }
+    let RegisterRequestDto {
+        email,
+        username,
+        password,
+    } = request;
+
+    let shared::Account {
+        created_at,
+        email,
+        id,
+        ..
+    } = state
+        .account_client.clone()
+        .register(
+            shared::RegisterRequest { email, username, password, is_admin: false }
+        ).await?
+        .into_inner();
+
+    info!("Successfully register user: {id}");
+
+    let response = RegisterResponseDto {
+        id,
+        email,
+        created_at: created_at.unwrap().to_string()
+    };
+
+    Ok(Json(response))
 }
 
 #[utoipa::path(
@@ -52,19 +64,42 @@ pub async fn post_register(
 )]
 pub async fn login(
   State(state): State<AppState>,
-  Json(req): Json<LoginRequestDto>,
+  Json(request): Json<LoginRequestDto>,
 ) -> Result<Json<LoginResponseDto>, BunnyChessApiError> {
-    info!("Login user with request: {req:?}.");
-    match services::authentication::login(&state, &req).await {
-        Ok(resp) => {
-            info!("Success login user_id: {resp:?}.");
-            Ok(Json(resp))
-        }
-        Err(e) => {
-            warn!("Unsuccessfully login user error: {e:?}.");
-            Err(e)
-        }
-    }
+    info!("Login user with request: {request:?}.");
+
+    let LoginRequestDto { email, password} = request;
+
+    let shared::LoginResponse {
+        jwt,
+        jwt_expires,
+        jwt_refresh,
+        jwt_refresh_expires,
+    } = state
+        .account_client.clone()
+        .login(
+            shared::LoginRequest { email, password }
+        ).await?
+        .into_inner();
+
+    let jwt_expires = match jwt_expires {
+        Some(jwt_expires) => Some(Timestamp::to_chrono(&jwt_expires)),
+        None => None,
+    };
+
+    let jwt_refresh_expires = match jwt_refresh_expires {
+        Some(jwt_refresh_expires) => Some(Timestamp::to_chrono(&jwt_refresh_expires)),
+        None => None,
+    };
+
+    let repsonse = LoginResponseDto {
+        jwt,
+        jwt_expires,
+        jwt_refresh,
+        jwt_refresh_expires,
+    };
+
+    Ok(Json(repsonse))
 }
 
 #[utoipa::path(
@@ -79,20 +114,44 @@ pub async fn login(
 )]
 pub async fn refresh(
   State(state): State<AppState>,
-  Json(req): Json<RefreshTokenRequestDto>,
+  Json(request): Json<RefreshTokenRequestDto>,
 ) -> Result<Json<LoginResponseDto>, BunnyChessApiError> {
-    info!("Refresh token with request: {req:?}.");
-    // todo!()
-    match services::token::refresh(&state, &req).await {
-        Ok(resp) => {
-            info!("Success refresh token user response: {resp:?}.");
-            Ok(Json(resp))
-        }
-        Err(e) => {
-            warn!("Unsuccessfully refresh token error: {e:?}.");
-            Err(e)
-        }
-    }
+    info!("Refresh token with request: {request:?}.");
+
+    let RefreshTokenRequestDto { token } = request;
+
+    let shared::LoginResponse {
+        jwt,
+        jwt_expires,
+        jwt_refresh,
+        jwt_refresh_expires,
+    } = state
+        .account_client.clone()
+        .refresh(
+            shared::RefreshRequest { jwt_refresh: token }
+        ).await?
+        .into_inner();
+
+    let jwt_expires = match jwt_expires {
+        Some(jwt_expires) => Some(Timestamp::to_chrono(&jwt_expires)),
+        None => None,
+    };
+
+    let jwt_refresh_expires = match jwt_refresh_expires {
+        Some(jwt_refresh_expires) => Some(Timestamp::to_chrono(&jwt_refresh_expires)),
+        None => None,
+    };
+
+    let repsonse = LoginResponseDto {
+        jwt,
+        jwt_expires,
+        jwt_refresh,
+        jwt_refresh_expires,
+    };
+
+    info!("Success refresh token user response: {repsonse:?}.");
+
+    Ok(Json(repsonse))
 }
 
 #[utoipa::path(

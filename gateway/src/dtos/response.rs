@@ -12,18 +12,18 @@ pub struct RegisterResponseDto {
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct LoginResponseDto {
   pub jwt: String,
-  pub jwt_expires_in: u64,
+  pub jwt_expires: Option<DateTime<Utc>>,
   pub jwt_refresh: String,
-  pub jwt_refresh_expires_in: u64,
+  pub jwt_refresh_expires: Option<DateTime<Utc>>,
 }
 
 impl LoginResponseDto {
-  pub fn new(access_token: String, refresh_token: String, expire_in: u64, jwt_refresh_expires_in: u64) -> Self {
+  pub fn new(access_token: String, refresh_token: String, expires: Option<DateTime<Utc>>, jwt_refresh_expires: Option<DateTime<Utc>>) -> Self {
     Self {
       jwt: access_token,
       jwt_refresh: refresh_token,
-      jwt_expires_in: expire_in,
-      jwt_refresh_expires_in
+      jwt_expires: expires,
+      jwt_refresh_expires,
     }
   }
 }
