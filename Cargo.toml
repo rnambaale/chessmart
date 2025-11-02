@@ -13,7 +13,7 @@ anyhow = "1.0.94"
 argon2 = "0.5.3"
 async-trait = "0.1.80"
 axum = "0.7.9"
-axum-extra = { version = "0.10.3", features = ["typed-header"] }
+axum-extra = { version = "0.10.3" }
 chrono = { version = "0.4.39", features = ["serde"] }
 clap = { version = "4.5.23", features = ["env", "derive"] }
 dotenvy = "0.15.7"
@@ -36,7 +36,7 @@ thiserror = "2.0.17"
 tokio = { version = "1.47.1" }
 tonic = "0.10"
 tower = "0.4"
-tower-http = { version = "0.6.6", features = ["cors", "fs", "set-header"] }
+tower-http = { version = "0.6.6" }
 tracing = "0.1.41"
 tracing-opentelemetry = "0.23.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
