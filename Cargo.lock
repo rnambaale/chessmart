@@ -520,6 +520,7 @@ dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
+ "prost-types",
  "redis",
  "reqwest 0.12.24",
  "serde",
@@ -3052,6 +3053,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "argon2",
+ "chrono",
  "jsonwebtoken",
  "prost",
  "prost-types",

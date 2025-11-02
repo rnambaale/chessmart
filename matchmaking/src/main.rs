@@ -202,7 +202,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
     );
 
-    let matchmaker_service = MatchmakerGatewayService::new(
+    let matchmaker_gateway_service = MatchmakerGatewayService::new(
         // Arc::new(state),
         matchmaking_queue_service,
         player_status_service,
@@ -219,7 +219,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("MatchmakerService gRPC server running on {}", addr);
 
     Server::builder()
-        .add_service(MatchmakerServiceServer::new(matchmaker_service))
+        .add_service(MatchmakerServiceServer::new(matchmaker_gateway_service))
         .add_service(RankingServiceServer::new(ranking_gateway_service))
         .serve(addr)
         .await?;

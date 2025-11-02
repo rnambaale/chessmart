@@ -1,9 +1,9 @@
-use shared::{AccountServiceServer, error::BunnyChessApiError};
+use shared::{AccountServiceServer, error::BunnyChessApiError, primitives::TimestampExt};
 use tonic::transport::Server;
 use prost_types::Timestamp;
 use tracing::{info, warn};
 
-use crate::{config::ApiConfig, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
+use crate::{config::ApiConfig, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, state::state::{AppState, AppStateBuilder}};
 
 pub mod services;
 pub mod repositories;

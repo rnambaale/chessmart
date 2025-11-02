@@ -26,6 +26,7 @@ jsonwebtoken = { workspace = true }
 opentelemetry = { workspace = true }
 opentelemetry-otlp = { workspace = true, features = ["http-proto", "reqwest-client"] }
 opentelemetry_sdk = { workspace = true, features = ["rt-tokio"] }
+prost-types = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp"] }
 reqwest = { workspace = true, default-features = false }
 serde = { workspace = true, features = ["derive"] }
