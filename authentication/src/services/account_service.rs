@@ -5,7 +5,9 @@ use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{database::{Database, postgres::PostgresDB, user::Account}, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
+use crate::{client::database::{Database, PostgresDB}, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
+
+// use crate::{{user::Account}, dtos::request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
 
 pub async fn register(
     state: &AppState,
@@ -27,7 +29,7 @@ pub async fn register(
         updated_at: Utc::now(),
     };
 
-    crate::database::user::insert_account(&mut tx, &account).await?;
+    crate::repositories::user::insert_account(&mut tx, &account).await?;
 
     tx.commit().await?;
 
@@ -38,7 +40,7 @@ async fn check_unique_username(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as Database>::DB>,
     username: &str,
 ) -> Result<bool, BunnyChessApiError> {
-    let username_option = crate::database::user::find_account_by_username(tx, username).await?;
+    let username_option = crate::repositories::user::find_account_by_username(tx, username).await?;
 
     let username_exists = match username_option {
         Some(_) => true,
@@ -56,7 +58,7 @@ pub async fn check_unique_email(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as Database>::DB>,
     email: &str,
 ) -> Result<bool, BunnyChessApiError> {
-    let email_result = crate::database::user::find_account_by_email(tx, email).await;
+    let email_result = crate::repositories::user::find_account_by_email(tx, email).await;
 
     let email_exists = match email_result {
         Ok(_) => true,
@@ -76,7 +78,7 @@ pub async fn login(
     request: &LoginRequestDto
 ) -> Result<LoginResponseDto, BunnyChessApiError> {
     let mut tx = state.db.begin_tx().await?;
-    let account = crate::database::user::find_account_by_email(&mut tx, &request.email).await?;
+    let account = crate::repositories::user::find_account_by_email(&mut tx, &request.email).await?;
 
     if account.is_none() {
         return Err(BunnyChessApiError::EmailNotFoundError("Email not found.".into()));
@@ -86,7 +88,7 @@ pub async fn login(
 
     crate::utils::password::verify(request.password.clone(), account.password.clone()).await?;
 
-    crate::database::user::update_last_login(&mut tx, &account).await?;
+    crate::repositories::user::update_last_login(&mut tx, &account).await?;
 
     tx.commit().await?;
 
@@ -105,7 +107,7 @@ pub async fn find_account(
         let id = Uuid::from_str(id)?;
 
         let mut tx = state.db.begin_tx().await?;
-        let account = crate::database::user::get_by_id(&mut tx, &id).await?;
+        let account = crate::repositories::user::get_by_id(&mut tx, &id).await?;
         tx.commit().await?;
 
         return Ok(account);
@@ -113,7 +115,7 @@ pub async fn find_account(
 
     if let Some(email) = email {
         let mut tx = state.db.begin_tx().await?;
-        let account_option = crate::database::user::find_account_by_email(&mut tx, &email).await?;
+        let account_option = crate::repositories::user::find_account_by_email(&mut tx, &email).await?;
         tx.commit().await?;
 
         let account = match account_option {

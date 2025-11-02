@@ -3,7 +3,9 @@ use shared::error::BunnyChessApiError;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::database::{self, postgres::PostgresDB};
+use crate::client::database::{self, PostgresDB};
+
+// use crate::database::{self, postgres::PostgresDB};
 
 pub struct Account {
     pub id: Uuid,
@@ -46,7 +48,7 @@ pub async fn get_by_id(
 }
 
 pub async fn insert_account(
-    tx: &mut sqlx::Transaction<'_, <PostgresDB as crate::database::Database>::DB>,
+    tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     account: &Account,
 ) -> Result<(), BunnyChessApiError> {
     sqlx::query!(
@@ -64,7 +66,7 @@ pub async fn insert_account(
 
 #[instrument(level = "debug", err)]
 pub async fn find_account_by_email(
-    tx: &mut sqlx::Transaction<'_, <PostgresDB as crate::database::Database>::DB>,
+    tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     email: &str,
 ) -> Result<Option<Account>, BunnyChessApiError> {
     match sqlx::query!(
@@ -114,7 +116,7 @@ pub async fn find_account_by_username(
 }
 
 pub async fn update_last_login(
-    tx: &mut sqlx::Transaction<'_, <PostgresDB as crate::database::Database>::DB>,
+    tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     account: &Account,
 ) -> Result<(), BunnyChessApiError> {
     sqlx::query!(

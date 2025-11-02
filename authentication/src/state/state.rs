@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use shared::error::BunnyChessApiError;
 
-use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, redis::redis::{RedisClient, RedisDB}};
+use crate::{client::{database::{Database, PostgresDB}, redis::{RedisClient, RedisDB}}, config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}};
 
 #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {

@@ -3,7 +3,7 @@ use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{constants::{ACCESS_TOKEN_ENCODE_KEY, EXPIRE_BEARER_TOKEN_SECS, EXPIRE_REFRESH_TOKEN_SECS, REFRESH_TOKEN_DECODE_KEY, REFRESH_TOKEN_ENCODE_KEY}, database::Database, dtos::{request::RefreshTokenRequestDto, response::LoginResponseDto}, state::state::AppState, utils::claim::UserClaims};
+use crate::{client::database::Database, constants::{ACCESS_TOKEN_ENCODE_KEY, EXPIRE_BEARER_TOKEN_SECS, EXPIRE_REFRESH_TOKEN_SECS, REFRESH_TOKEN_DECODE_KEY, REFRESH_TOKEN_ENCODE_KEY}, dtos::{request::RefreshTokenRequestDto, response::LoginResponseDto}, state::state::AppState, utils::claim::UserClaims};
 
 pub fn generate_tokens(
   user_id: Uuid,
@@ -32,7 +32,7 @@ pub async fn refresh(state: &AppState, req: &RefreshTokenRequestDto) -> Result<L
     let user_id = crate::services::session::check(&state.redis, &user_claims).await?;
 
     let mut tx = state.db.begin_tx().await?;
-    let user = crate::database::user::get_by_id(&mut tx, &user_id).await?;
+    let user = crate::repositories::user::get_by_id(&mut tx, &user_id).await?;
     tx.commit().await?;
 
     let session_id = crate::services::session::set(&state.redis, user.id).await?;

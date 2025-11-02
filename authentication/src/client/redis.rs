@@ -5,7 +5,7 @@ use tracing::info;
 use crate::config::RedisConfig;
 
 #[derive(Clone)]
-pub struct RedisDB { }
+pub struct RedisDB {}
 
 pub type RedisClient = redis::Client;
 
@@ -132,121 +132,121 @@ impl RedisClientExt for redis::Client {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     use fake::{Fake, Faker};
-//     use uuid::Uuid;
+    use fake::{Fake, Faker};
+    use uuid::Uuid;
 
-//     #[tokio::test]
-//     async fn test_ping_redis_server() {
-//         let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
-//         let resp = client.ping().await.unwrap();
-//         let pong = "PONG";
-//         assert!(matches!(resp, Some(p) if p == pong));
-//     }
+    #[tokio::test]
+    async fn test_ping_redis_server() {
+        let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
+        let resp = client.ping().await.unwrap();
+        let pong = "PONG";
+        assert!(matches!(resp, Some(p) if p == pong));
+    }
 
-//     #[tokio::test]
-//     async fn test_set_key_redis() {
-//         let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
-//         let key: String = Faker.fake();
-//         let value = Uuid::new_v4().to_string();
+    #[tokio::test]
+    async fn test_set_key_redis() {
+        let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
+        let key: String = Faker.fake();
+        let value = Uuid::new_v4().to_string();
 
-//         client
-//             .set(&key, &value, Duration::from_secs(5))
-//             .await
-//             .unwrap();
-//         let resp = client.get(&key).await.unwrap();
-//         assert!(matches!(resp, Some(v) if v == value));
+        client
+            .set(&key, &value, Duration::from_secs(5))
+            .await
+            .unwrap();
+        let resp = client.get(&key).await.unwrap();
+        assert!(matches!(resp, Some(v) if v == value));
 
-//         let resp = client.ttl(&key).await.unwrap();
-//         assert!(resp > 0);
-//     }
+        let resp = client.ttl(&key).await.unwrap();
+        assert!(resp > 0);
+    }
 
-//     #[tokio::test]
-//     async fn test_exist_key_redis() {
-//         let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
+    #[tokio::test]
+    async fn test_exist_key_redis() {
+        let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
 
-//         let key: String = Faker.fake();
-//         let value = Uuid::new_v4().to_string();
-//         client
-//             .set(&key, &value, Duration::from_secs(4))
-//             .await
-//             .unwrap();
-//         let resp = client.get(&key).await.unwrap();
-//         assert!(matches!(resp, Some(v) if v == value));
-//         let resp = client.exist(&key).await.unwrap();
-//         assert!(resp);
-//         let key: String = Faker.fake();
-//         let resp = client.exist(&key).await.unwrap();
-//         assert!(!resp);
-//     }
+        let key: String = Faker.fake();
+        let value = Uuid::new_v4().to_string();
+        client
+            .set(&key, &value, Duration::from_secs(4))
+            .await
+            .unwrap();
+        let resp = client.get(&key).await.unwrap();
+        assert!(matches!(resp, Some(v) if v == value));
+        let resp = client.exist(&key).await.unwrap();
+        assert!(resp);
+        let key: String = Faker.fake();
+        let resp = client.exist(&key).await.unwrap();
+        assert!(!resp);
+    }
 
-//     #[tokio::test]
-//     async fn test_del_key_redis() {
-//         let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
+    #[tokio::test]
+    async fn test_del_key_redis() {
+        let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
 
-//         let key: String = Faker.fake();
-//         let value = Uuid::new_v4().to_string();
-//         client
-//             .set(&key, &value, Duration::from_secs(4))
-//             .await
-//             .unwrap();
-//         let resp = client.get(&key).await.unwrap();
-//         assert!(matches!(resp, Some(v) if v == value));
-//         let resp = client.exist(&key).await.unwrap();
-//         assert!(resp);
-//         client.del(&key).await.unwrap();
-//         let resp = client.exist(&key).await.unwrap();
-//         assert!(!resp);
-//     }
+        let key: String = Faker.fake();
+        let value = Uuid::new_v4().to_string();
+        client
+            .set(&key, &value, Duration::from_secs(4))
+            .await
+            .unwrap();
+        let resp = client.get(&key).await.unwrap();
+        assert!(matches!(resp, Some(v) if v == value));
+        let resp = client.exist(&key).await.unwrap();
+        assert!(resp);
+        client.del(&key).await.unwrap();
+        let resp = client.exist(&key).await.unwrap();
+        assert!(!resp);
+    }
 
-//     #[tokio::test]
-//     async fn test_key_ttl_redis() {
-//         let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
+    #[tokio::test]
+    async fn test_key_ttl_redis() {
+        let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
 
-//         let key: String = Faker.fake();
-//         let ttl = 4;
-//         let value = Uuid::new_v4().to_string();
-//         client
-//             .set(&key, &value, Duration::from_secs(ttl))
-//             .await
-//             .unwrap();
-//         let resp = client.get(&key).await.unwrap();
-//         assert!(matches!(resp, Some(v) if v == value));
-//         let resp = client.ttl(&key).await.unwrap();
-//         assert!(resp <= ttl as i64 && resp > 0);
-//         client.del(&key).await.unwrap();
-//         let resp = client.ttl(&key).await.unwrap();
-//         assert!(resp < 0);
-//     }
+        let key: String = Faker.fake();
+        let ttl = 4;
+        let value = Uuid::new_v4().to_string();
+        client
+            .set(&key, &value, Duration::from_secs(ttl))
+            .await
+            .unwrap();
+        let resp = client.get(&key).await.unwrap();
+        assert!(matches!(resp, Some(v) if v == value));
+        let resp = client.ttl(&key).await.unwrap();
+        assert!(resp <= ttl as i64 && resp > 0);
+        client.del(&key).await.unwrap();
+        let resp = client.ttl(&key).await.unwrap();
+        assert!(resp < 0);
+    }
 
-//     #[tokio::test]
-//     async fn test_hset_key_redis() {
-//         let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
-//         let key: String = Faker.fake();
-//         let field1: String = Faker.fake();
-//         let value1 = Uuid::new_v4().to_string();
-//         let field2: String = Faker.fake();
-//         let value2 = Uuid::new_v4().to_string();
+    #[tokio::test]
+    async fn test_hset_key_redis() {
+        let client = RedisDB::new(&RedisConfig::default()).await.unwrap();
+        let key: String = Faker.fake();
+        let field1: String = Faker.fake();
+        let value1 = Uuid::new_v4().to_string();
+        let field2: String = Faker.fake();
+        let value2 = Uuid::new_v4().to_string();
 
-//         let hash_values = &[
-//             (field1.as_str(), value1.as_str()),
-//             (field2.as_str(), value2.as_str())
-//         ];
+        let hash_values = &[
+            (field1.as_str(), value1.as_str()),
+            (field2.as_str(), value2.as_str())
+        ];
 
-//         client
-//             .hset(&key, hash_values, Duration::from_secs(5))
-//             .await
-//             .unwrap();
-//         let resp = client.hgetall(&key).await.unwrap();
+        client
+            .hset(&key, hash_values, Duration::from_secs(5))
+            .await
+            .unwrap();
+        let resp = client.hgetall(&key).await.unwrap();
 
-//         let expected: HashMap<String, String> = hash_values
-//             .iter()
-//             .map(|(k, v)| (k.to_string(), v.to_string()))
-//             .collect();
+        let expected: HashMap<String, String> = hash_values
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect();
 
-//         assert!(matches!(resp, Some(v) if v == expected));
-//     }
-// }
+        assert!(matches!(resp, Some(v) if v == expected));
+    }
+}

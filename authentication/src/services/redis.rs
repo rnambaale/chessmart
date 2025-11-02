@@ -5,7 +5,7 @@ use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{constants::EXPIRE_SESSION_CODE_SECS, redis::redis::{RedisClient, RedisClientExt}};
+use crate::{client::redis::{RedisClient, RedisClientExt}, constants::EXPIRE_SESSION_CODE_SECS};
 
 pub trait RedisKey: Debug + Display {
   type Value: Serialize + DeserializeOwned + Debug;

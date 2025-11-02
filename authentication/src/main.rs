@@ -3,11 +3,11 @@ use tonic::transport::Server;
 use prost_types::Timestamp;
 use tracing::{info, warn};
 
-use crate::{config::ApiConfig, database::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
+use crate::{config::ApiConfig, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
 
 pub mod services;
-pub mod database;
-pub mod redis;
+pub mod repositories;
+pub mod client;
 mod config;
 mod state;
 pub mod utils;
