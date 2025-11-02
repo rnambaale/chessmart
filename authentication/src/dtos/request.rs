@@ -17,3 +17,9 @@ pub struct LoginRequestDto {
 pub struct RefreshTokenRequestDto {
   pub token: String,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FindAccountRequestDto {
+  pub email: Option<String>,
+  pub id: Option<String>,
+}

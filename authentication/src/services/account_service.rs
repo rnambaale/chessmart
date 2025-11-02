@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 use chrono::Utc;
 use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{database::{Database, postgres::PostgresDB, user::Account}, dtos::{request::{LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
+use crate::{database::{Database, postgres::PostgresDB, user::Account}, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
 
 pub async fn register(
     state: &AppState,
@@ -91,6 +93,42 @@ pub async fn login(
     let session_id = crate::services::session::set(&state.redis, account.id).await?;
     let response = crate::services::token::generate_tokens(account.id, session_id)?;
     Ok(response)
+}
+
+pub async fn find_account(
+    state: &AppState,
+    request: &FindAccountRequestDto
+) -> Result<Account, BunnyChessApiError> {
+    let FindAccountRequestDto { id, email} = request;
+
+    if let Some(id) = id {
+        let id = Uuid::from_str(id)?;
+
+        let mut tx = state.db.begin_tx().await?;
+        let account = crate::database::user::get_by_id(&mut tx, &id).await?;
+        tx.commit().await?;
+
+        return Ok(account);
+    }
+
+    if let Some(email) = email {
+        let mut tx = state.db.begin_tx().await?;
+        let account_option = crate::database::user::find_account_by_email(&mut tx, &email).await?;
+        tx.commit().await?;
+
+        let account = match account_option {
+            Some(account ) => account,
+            None => {
+                return Err(BunnyChessApiError::EmailNotFoundError("User with email not found".into()));
+            }
+        };
+
+        return Ok(account);
+    }
+
+    Err(
+        BunnyChessApiError::InvalidInputError("Either 'id' and 'email' must be set".to_string())
+    )
 }
 
 pub async fn logout(state: &AppState, user_id: Uuid) -> Result<(), BunnyChessApiError> {

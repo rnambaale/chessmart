@@ -1,9 +1,9 @@
-use shared::AccountServiceServer;
+use shared::{AccountServiceServer, error::BunnyChessApiError};
 use tonic::transport::Server;
 use prost_types::Timestamp;
 use tracing::{info, warn};
 
-use crate::{config::ApiConfig, database::user::Account, dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto}}, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
+use crate::{config::ApiConfig, database::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, state::state::{AppState, AppStateBuilder}, utils::timestamps::TimestampExt};
 
 pub mod services;
 pub mod database;
@@ -126,9 +126,43 @@ impl shared::AccountService for AccountGatewayService {
 
     async fn find_account(
         &self,
-        _request: tonic::Request<shared::FindAccountRequest>,
+        request: tonic::Request<shared::FindAccountRequest>,
     ) -> std::result::Result<tonic::Response<shared::Account>, tonic::Status> {
-        todo!()
+        let shared::FindAccountRequest { id, email } = request.into_inner();
+
+        let keys = vec![id.clone(), email.clone()];
+
+        if keys.into_iter().filter(|key| key.is_some()).count() != 1 {
+            return Err(
+                BunnyChessApiError::InvalidInputError("Exactly one between 'id' and 'email' must be set".to_string()).into()
+            );
+        }
+
+        let request = FindAccountRequestDto { id, email };
+
+        let Account {
+            id,
+            email,
+            username,
+            is_admin,
+            created_at,
+            last_login_at,
+            ..
+        } = crate::services::account_service::find_account(&self.state, &request).await?;
+
+        let last_login_at = match last_login_at {
+            Some(login_at) => Some(Timestamp::from_chrono(login_at)),
+            None => None,
+        };
+
+        Ok(tonic::Response::new(shared::Account {
+            id: id.to_string(),
+            email,
+            username,
+            is_admin,
+            created_at: Some(Timestamp::from_chrono(created_at)),
+            last_login_at
+        }))
     }
 
 }
