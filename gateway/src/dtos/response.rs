@@ -47,7 +47,7 @@ pub struct MeResponseDto {
   pub email: String,
   pub username: String,
   pub is_admin: bool,
-  pub created_at: DateTime<Utc>,
+  pub created_at: Option<DateTime<Utc>>,
   pub last_login_at: Option<DateTime<Utc>>,
   pub status: String,
   pub game_type: Option<String>,

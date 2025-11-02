@@ -1,4 +1,3 @@
-pub mod accounts;
 pub mod authentication;
 pub mod matchmaking_service;
 pub mod redis;

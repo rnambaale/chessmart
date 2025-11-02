@@ -1,6 +1,6 @@
 use axum::{extract::State, Json};
 use prost_types::Timestamp;
-use shared::{Account, GetAccountRankingResponse, primitives::TimestampExt};
+use shared::{GetAccountRankingResponse, primitives::TimestampExt};
 use tracing::info;
 
 use crate::{dtos::response::{AccountResponseDto, MeResponseDto}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, utils::claim::UserClaims};
@@ -16,22 +16,72 @@ use crate::{dtos::response::{AccountResponseDto, MeResponseDto}, error::{AppResp
     security(("jwt" = []))
 )]
 pub async fn me(
-  State(_state): State<AppState>,
+  State(state): State<AppState>,
   user: UserClaims,
 ) -> Result<Json<MeResponseDto>, BunnyChessApiError> {
     info!("Get profile user id: {}.", user.uid);
 
-    todo!()
-//   match services::accounts::get_profile(&state, user.uid).await {
-//     Ok(resp) => {
-//       info!("Success get profile user: {}.", user.uid);
-//       Ok(Json(resp))
-//     }
-//     Err(e) => {
-//       warn!("Unsuccessfully get profile user: {e:?}.");
-//       Err(e)
-//     }
-//   }
+    let shared::Account {
+        username,
+        is_admin,
+        created_at,
+        last_login_at,
+        email,
+        ..
+    } = state
+        .account_client.clone()
+        .find_account(
+            shared::FindAccountRequest { id: Some(user.uid.to_string()), email: None }
+        ).await?
+        .into_inner();
+
+    let GetAccountRankingResponse {
+        ranked_mmr, ..
+    } = state
+        .ranking_client.clone()
+        .get_account_ranking(
+            shared::GetAccountRankingRequest { account_id: user.uid.to_string() }
+        ).await?
+        .into_inner();
+
+    let shared::GetAccountStatusResponse {
+        status,
+        game_type,
+        ranked,
+        game_id,
+        ..
+    } = state
+        .matchmaking_client.clone()
+        .get_account_status(
+            shared::GetAccountStatusRequest { account_id: user.uid.to_string() }
+        ).await?
+        .into_inner();
+
+    let created_at = match created_at {
+        Some(created_at) => Some(Timestamp::to_chrono(&created_at)),
+        None => None,
+    };
+
+    let last_login_at = match last_login_at {
+        Some(last_login_at) => Some(Timestamp::to_chrono(&last_login_at)),
+        None => None,
+    };
+
+    let response = MeResponseDto {
+        id: user.uid.to_string(),
+        email,
+        username,
+        is_admin,
+        created_at,
+        last_login_at,
+        mmr: ranked_mmr as u64,
+        status,
+        game_type,
+        ranked,
+        game_id,
+    };
+
+    Ok(Json(response))
 }
 
 #[utoipa::path(
@@ -51,7 +101,7 @@ pub async fn get_account(
 ) -> Result<Json<AccountResponseDto>, BunnyChessApiError> {
     info!("Get profile user id: {}.", account_id);
 
-    let Account {
+    let shared::Account {
         username,
         is_admin,
         created_at,
