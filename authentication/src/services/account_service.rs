@@ -7,8 +7,6 @@ use uuid::Uuid;
 
 use crate::{client::database::{Database, PostgresDB}, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
 
-// use crate::{{user::Account}, dtos::request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
-
 pub async fn register(
     state: &AppState,
     request: &RegisterRequestDto

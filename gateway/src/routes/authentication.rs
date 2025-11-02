@@ -3,9 +3,9 @@ use axum::{
 };
 use prost_types::Timestamp;
 use shared::primitives::TimestampExt;
-use tracing::{info, instrument, warn};
+use tracing::{info, instrument};
 
-use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, services, utils::claim::UserClaims};
+use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, utils::claim::UserClaims};
 
 #[utoipa::path(
     post,
@@ -165,20 +165,21 @@ pub async fn refresh(
     security(("jwt" = []))
 )]
 pub async fn logout(
-  State(state): State<AppState>,
+  State(_state): State<AppState>,
   user: UserClaims,
 ) -> Result<Json<MessageResponseDto>, BunnyChessApiError> {
   info!("Logout user_id: {}", user.uid);
-  match services::authentication::logout(&state, user.uid).await {
-    Ok(_) => {
-      info!("Success logout user user_id: {}", user.uid);
-      Ok(Json(MessageResponseDto::new(
-        "This user has successfully logged out.",
-      )))
-    }
-    Err(e) => {
-      warn!("unsuccessfully logout user: {e:?}");
-      Err(e)
-    }
-  }
+  todo!()
+//   match services::authentication::logout(&state, user.uid).await {
+//     Ok(_) => {
+//       info!("Success logout user user_id: {}", user.uid);
+//       Ok(Json(MessageResponseDto::new(
+//         "This user has successfully logged out.",
+//       )))
+//     }
+//     Err(e) => {
+//       warn!("unsuccessfully logout user: {e:?}");
+//       Err(e)
+//     }
+//   }
 }

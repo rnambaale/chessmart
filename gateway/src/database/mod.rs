@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 
 pub mod postgres;
-pub mod user;
 
 #[async_trait]
 pub trait Database {
