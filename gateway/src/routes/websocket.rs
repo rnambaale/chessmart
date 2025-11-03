@@ -21,6 +21,9 @@ enum ClientMessage {
 
     #[serde(rename = "matchmaking:accept-pending-game")]
     MatchMakingAcceptPendingGame(AcceptPendingGameDto),
+
+    #[serde(rename = "matchmaking:join-game")]
+    MatchMakingJoinGame(JoinGameDto),
 }
 
 #[derive(Debug, Deserialize)]
@@ -52,6 +55,12 @@ struct RemoveFromQueueDto {
 struct AcceptPendingGameDto {
     #[serde(rename = "pendingGameId")]
     pending_game_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct JoinGameDto {
+    #[serde(rename = "gameId")]
+    _game_id: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -109,6 +118,11 @@ async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid, s
                         ClientMessage::MatchMakingAcceptPendingGame(data) => {
                             let matchmaking_grpc_client = state.matchmaking_client.clone();
                             handle_accept_pending_game(data, user_id, &mut socket, matchmaking_grpc_client).await;
+                        }
+
+                        ClientMessage::MatchMakingJoinGame(data) => {
+                            let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            handle_join_game(data, user_id, &mut socket, matchmaking_grpc_client).await;
                         }
                     }
                 }
@@ -195,11 +209,31 @@ async fn handle_accept_pending_game(
     client.accept_pending_game(shared::AcceptPendingGameRequest {
         account_id: account_id.to_string(),
         pending_game_id: payload.pending_game_id,
-    }).await.expect("Failed to remove player from queue.");
+    }).await.expect("Failed to accept pending game.");
 
     let response = ServerMessage::Ack;
 
     if let Ok(json) = serde_json::to_string(&response) {
         let _ = socket.send(Message::Text(json)).await;
     }
+}
+
+async fn handle_join_game(
+    _payload: JoinGameDto,
+    _account_id: Uuid,
+    _socket: &mut WebSocket,
+    mut _client: MatchmakingGrpcClient,
+) {
+    // let shared::GetAccountStatusResponse {
+    //     status, game_id, ..
+    // } = client
+    //     .get_account_status(shared::GetAccountStatusRequest {
+    //         account_id: account_id.to_string()
+    //     })
+    //     .await.expect("Failed to get account status").into_inner();
+
+    // if status == "playing" && game_id == payload.game_id {
+    //     // socket.
+    // }
+    todo!()
 }
