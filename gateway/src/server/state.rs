@@ -4,7 +4,7 @@ use tonic::transport::Channel;
 use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
 
 type AccountGrpcClient = AccountServiceClient<Channel>;
-type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
+pub type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
 type RankingGrpcClient = RankingServiceClient<Channel>;
 
 #[derive(Clone)]

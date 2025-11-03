@@ -1,10 +1,11 @@
 use std::net::SocketAddr;
 
-use axum::{extract::{ws::{Message, WebSocket}, ConnectInfo, WebSocketUpgrade}, response::IntoResponse};
+use axum::{extract::{ConnectInfo, State, WebSocketUpgrade, ws::{Message, WebSocket}}, response::IntoResponse};
 use serde::{Deserialize, Serialize};
+use shared::AddToQueueRequest;
 use uuid::Uuid;
 
-use crate::utils::claim::UserClaims;
+use crate::{server::state::{AppState, MatchmakingGrpcClient}, utils::claim::UserClaims};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -32,8 +33,8 @@ struct ChatData {
 #[derive(Debug, Deserialize)]
 struct AddToQueueDto {
     #[serde(rename = "gameType")]
-    _game_type: String,
-    _ranked: bool,
+    game_type: String,
+    ranked: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,7 +43,7 @@ enum ServerMessage {
     EventAck { received: bool },
     ChatAck { delivered: bool },
     Pong,
-    _Ack,
+    Ack,
 }
 
 /// The handler for the HTTP request (this gets called when the HTTP request lands at the start
@@ -54,13 +55,14 @@ pub async fn ws_handler(
     ws: WebSocketUpgrade,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     user: UserClaims,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
     tracing::info!("Handling socket connection for user_id: {}", user.uid);
-    ws.on_upgrade(move |socket| handle_socket(socket, addr, user.uid))
+    ws.on_upgrade(move |socket| handle_socket(socket, addr, user.uid, state))
 }
 
 /// Actual websocket statemachine (one will be spawned per connection)
-async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid) {
+async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid, state: AppState) {
     while let Some(msg) = socket.recv().await {
         if let Ok(Message::Text(text)) = msg {
             tracing::debug!("raw message on {}", text.clone());
@@ -78,7 +80,8 @@ async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid) {
                         }
 
                         ClientMessage::MatchMakingAddToQueue(data) => {
-                            handle_add_to_queue(data, user_id, &mut socket).await;
+                            let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            handle_add_to_queue(data, user_id, &mut socket, matchmaking_grpc_client).await;
                         }
                     }
                 }
@@ -116,20 +119,22 @@ async fn handle_ping(socket: &mut WebSocket) {
     }
 }
 
-async fn handle_add_to_queue(_add_to_queue_data: AddToQueueDto, _account_id: Uuid, _socket: &mut WebSocket) {
-    todo!()
-    // println!("Add to queue game_type: {}, ranked: {}", add_to_queue_data.game_type, add_to_queue_data.ranked);
+async fn handle_add_to_queue(
+    add_to_queue_data: AddToQueueDto,
+    account_id: Uuid,
+    socket: &mut WebSocket,
+    mut client: MatchmakingGrpcClient,
+) {
+    println!("Add to queue game_type: {}, ranked: {}", add_to_queue_data.game_type, add_to_queue_data.ranked);
 
-    // services::matchmaking_service::add_to_queue(&AddToQueueRequestPb{
-    //     account_id,
-    //     game_type: add_to_queue_data.game_type,
-    //     ranked: add_to_queue_data.ranked,
-    // })
-    // .await
-    // .expect("Failed to add player to queue");
+    client.add_to_queue(AddToQueueRequest{
+        account_id: account_id.to_string(),
+        game_type: add_to_queue_data.game_type,
+        ranked: add_to_queue_data.ranked,
+    }).await.expect("Failed to add player to queue.");
 
-    // let response = ServerMessage::Ack;
-    // if let Ok(json) = serde_json::to_string(&response) {
-    //     let _ = socket.send(Message::Text(json)).await;
-    // }
+    let response = ServerMessage::Ack;
+    if let Ok(json) = serde_json::to_string(&response) {
+        let _ = socket.send(Message::Text(json)).await;
+    }
 }
