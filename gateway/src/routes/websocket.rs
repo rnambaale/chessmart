@@ -18,6 +18,9 @@ enum ClientMessage {
 
     #[serde(rename = "matchmaking:remove-from-queue")]
     MatchMakingRemoveFromQueue(RemoveFromQueueDto),
+
+    #[serde(rename = "matchmaking:accept-pending-game")]
+    MatchMakingAcceptPendingGame(AcceptPendingGameDto),
 }
 
 #[derive(Debug, Deserialize)]
@@ -43,6 +46,12 @@ struct AddToQueueDto {
 struct RemoveFromQueueDto {
     #[serde(rename = "accountId")]
     account_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct AcceptPendingGameDto {
+    #[serde(rename = "pendingGameId")]
+    pending_game_id: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -96,6 +105,11 @@ async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid, s
                             let matchmaking_grpc_client = state.matchmaking_client.clone();
                             handle_remove_from_queue(data, &mut socket, matchmaking_grpc_client).await;
                         }
+
+                        ClientMessage::MatchMakingAcceptPendingGame(data) => {
+                            let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            handle_accept_pending_game(data, user_id, &mut socket, matchmaking_grpc_client).await;
+                        }
                     }
                 }
                 Err(_) => {
@@ -133,17 +147,17 @@ async fn handle_ping(socket: &mut WebSocket) {
 }
 
 async fn handle_add_to_queue(
-    add_to_queue_data: AddToQueueDto,
+    payload: AddToQueueDto,
     account_id: Uuid,
     socket: &mut WebSocket,
     mut client: MatchmakingGrpcClient,
 ) {
-    println!("Add to queue game_type: {}, ranked: {}", add_to_queue_data.game_type, add_to_queue_data.ranked);
+    println!("Add to queue game_type: {}, ranked: {}", payload.game_type, payload.ranked);
 
     client.add_to_queue(shared::AddToQueueRequest{
         account_id: account_id.to_string(),
-        game_type: add_to_queue_data.game_type,
-        ranked: add_to_queue_data.ranked,
+        game_type: payload.game_type,
+        ranked: payload.ranked,
     }).await.expect("Failed to add player to queue.");
 
     let response = ServerMessage::Ack;
@@ -153,14 +167,34 @@ async fn handle_add_to_queue(
 }
 
 async fn handle_remove_from_queue(
-    remove_from_queue_data: RemoveFromQueueDto,
+    payload: RemoveFromQueueDto,
     socket: &mut WebSocket,
     mut client: MatchmakingGrpcClient,
 ) {
-    println!("Remove from queue account_id: {}", remove_from_queue_data.account_id);
+    println!("Remove from queue account_id: {}", payload.account_id);
 
     client.remove_from_queue(shared::RemoveFromQueueRequest {
-        account_id: remove_from_queue_data.account_id,
+        account_id: payload.account_id,
+    }).await.expect("Failed to remove player from queue.");
+
+    let response = ServerMessage::Ack;
+
+    if let Ok(json) = serde_json::to_string(&response) {
+        let _ = socket.send(Message::Text(json)).await;
+    }
+}
+
+async fn handle_accept_pending_game(
+    payload: AcceptPendingGameDto,
+    account_id: Uuid,
+    socket: &mut WebSocket,
+    mut client: MatchmakingGrpcClient,
+) {
+    println!("Accept pending game account_id: {}", account_id);
+
+    client.accept_pending_game(shared::AcceptPendingGameRequest {
+        account_id: account_id.to_string(),
+        pending_game_id: payload.pending_game_id,
     }).await.expect("Failed to remove player from queue.");
 
     let response = ServerMessage::Ack;
