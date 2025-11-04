@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package game;
+
+message CreateGameRequest {
+  string account_id0 = 1;
+  string account_id1 = 2;
+  string game_type = 3;
+  string metadata = 4;
+}
+
+message CreateGameResponse {
+  string game_id = 1;
+  string game_repr = 2;
+}
+
+message MakeMoveRequest {
+  string account_id = 1;
+  string game_id = 2;
+  string move = 3;
+}
+
+message MakeMoveResponse {
+  string game_repr = 1;
+}
+
+message GetGameStateRequest {
+  string game_id = 1;
+}
+
+message GetGameStateResponse {
+  string game_repr = 1;
+}
+
+message CheckGameResultRequest {
+  string game_id = 1;
+}
+
+message CheckGameResultResponse {
+}
+
+message ResignRequest {
+  string account_id = 1;
+  string game_id = 2;
+}
+
+message ResignResponse {
+  string game_repr = 1;
+}
+
+service GameService {
+  rpc CreateGame (CreateGameRequest) returns (CreateGameResponse) {}
+  rpc GetGameState (GetGameStateRequest) returns (GetGameStateResponse) {}
+  rpc CheckGameResult (CheckGameResultRequest) returns (CheckGameResultResponse) {}
+  rpc MakeMove (MakeMoveRequest) returns (MakeMoveResponse) {}
+  rpc Resign (ResignRequest) returns (ResignResponse) {}
+}

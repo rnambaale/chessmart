@@ -14,6 +14,10 @@ pub mod generated {
     pub mod account_service {
         include!("generated/account.rs");
     }
+
+    pub mod game_service {
+        include!("generated/game.rs");
+    }
 }
 
 pub use generated::matchmaker_service::matchmaker_service_server::{MatchmakerService, MatchmakerServiceServer};
@@ -27,6 +31,9 @@ pub use generated::ranking_service::ranking_service_server::{RankingService, Ran
 
 pub use generated::account_service::{RegisterRequest, Account, LoginRequest, LoginResponse, RefreshRequest, FindAccountRequest};
 pub use generated::account_service::account_service_server::{AccountService, AccountServiceServer};
+
+pub use generated::game_service::{CreateGameRequest, CreateGameResponse, MakeMoveRequest, MakeMoveResponse, GetGameStateRequest, GetGameStateResponse, CheckGameResultRequest, CheckGameResultResponse, ResignRequest, ResignResponse};
+pub use generated::game_service::game_service_server::{GameService, GameServiceServer};
 
 pub mod error;
 pub mod primitives;
