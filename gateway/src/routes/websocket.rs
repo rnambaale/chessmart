@@ -4,7 +4,7 @@ use axum::{extract::{ConnectInfo, State, WebSocketUpgrade, ws::{Message, WebSock
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{server::state::{AppState, MatchmakingGrpcClient}, utils::claim::UserClaims};
+use crate::{server::state::{AppState, GameGrpcClient, MatchmakingGrpcClient}, utils::claim::UserClaims};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -121,8 +121,8 @@ async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid, s
                         }
 
                         ClientMessage::MatchMakingJoinGame(data) => {
-                            let matchmaking_grpc_client = state.matchmaking_client.clone();
-                            handle_join_game(data, user_id, &mut socket, matchmaking_grpc_client).await;
+                            let game_grpc_client = state.game_client.clone();
+                            handle_join_game(data, user_id, &mut socket, game_grpc_client).await;
                         }
                     }
                 }
@@ -222,7 +222,7 @@ async fn handle_join_game(
     _payload: JoinGameDto,
     _account_id: Uuid,
     _socket: &mut WebSocket,
-    mut _client: MatchmakingGrpcClient,
+    mut _client: GameGrpcClient,
 ) {
     // let shared::GetAccountStatusResponse {
     //     status, game_id, ..

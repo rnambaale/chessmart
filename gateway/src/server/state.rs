@@ -1,4 +1,4 @@
-use shared::generated::{account_service::account_service_client::AccountServiceClient, matchmaker_service::matchmaker_service_client::MatchmakerServiceClient, ranking_service::ranking_service_client::RankingServiceClient};
+use shared::generated::{account_service::account_service_client::AccountServiceClient, game_service::game_service_client::GameServiceClient, matchmaker_service::matchmaker_service_client::MatchmakerServiceClient, ranking_service::ranking_service_client::RankingServiceClient};
 use tonic::transport::Channel;
 
 use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
@@ -6,6 +6,7 @@ use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, Token
 type AccountGrpcClient = AccountServiceClient<Channel>;
 pub type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
 type RankingGrpcClient = RankingServiceClient<Channel>;
+pub type GameGrpcClient = GameServiceClient<Channel>;
 
 #[derive(Clone)]
 pub struct AppState<DB: Database = PostgresDB> {
@@ -15,6 +16,7 @@ pub struct AppState<DB: Database = PostgresDB> {
     pub account_client: AccountGrpcClient,
     pub matchmaking_client: MatchmakingGrpcClient,
     pub ranking_client: RankingGrpcClient,
+    pub game_client: GameGrpcClient,
 }
 
 impl<DB> AppState<DB>
@@ -28,6 +30,7 @@ where
         account_client: AccountGrpcClient,
         matchmaking_client: MatchmakingGrpcClient,
         ranking_client: RankingGrpcClient,
+        game_client: GameGrpcClient,
     ) -> Self {
         Self {
             db,
@@ -36,6 +39,7 @@ where
             account_client,
             matchmaking_client,
             ranking_client,
+            game_client,
         }
     }
 }
@@ -110,6 +114,11 @@ impl AppStateBuilder {
         let matchmaking_client = MatchmakerServiceClient::new(matchmaking_channel.clone());
         let ranking_client = RankingServiceClient::new(matchmaking_channel.clone());
 
+        let game_channel = Channel::from_static("http://[::1]:50053")
+            .connect()
+            .await?;
+        let game_client = GameServiceClient::new(game_channel.clone());
+
         Ok(AppState::new(
             db,
             ApiConfig::new(
@@ -123,6 +132,7 @@ impl AppStateBuilder {
             account_client,
             matchmaking_client,
             ranking_client,
+            game_client,
         ))
     }
 }
