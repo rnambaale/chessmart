@@ -44,11 +44,21 @@ pub enum BunnyChessApiError {
 
     #[error(transparent)]
     JwtError(#[from] jsonwebtoken::errors::Error),
+
+    #[error("{0}")]
+    GrpcError(String),
 }
 
 impl From<BunnyChessApiError> for tonic::Status {
     fn from(error: BunnyChessApiError) -> Self {
         tonic::Status::invalid_argument(error.to_string())
+    }
+}
+
+impl From<tonic::transport::Error> for BunnyChessApiError {
+    fn from(error: tonic::transport::Error) -> Self {
+        eprintln!("gRPC error: {}", error);
+        BunnyChessApiError::GrpcError(error.to_string())
     }
 }
 
