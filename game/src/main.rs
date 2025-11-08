@@ -29,32 +29,31 @@ impl GameGatewayService {
 impl shared::GameService for GameGatewayService {
     async fn create_game(
         &self,
-        _request: tonic::Request<shared::CreateGameRequest>,
+        request: tonic::Request<shared::CreateGameRequest>,
     ) -> Result<tonic::Response<shared::CreateGameResponse>, tonic::Status> {
-        todo!()
-        // let shared::CreateGameRequest {
-        //     account_id0,
-        //     account_id1,
-        //     game_type,
-        //     metadata,
-        // } = request.into_inner();
+        let shared::CreateGameRequest {
+            account_id0,
+            account_id1,
+            game_type,
+            metadata,
+        } = request.into_inner();
 
-        // let game_type = shared::primitives::GameType::from_str(&game_type)?;
+        let game_type = shared::primitives::GameType::from_str(&game_type)?;
 
-        // let chess_game = crate::services::game_service::create_game(
-        //     &self.state,
-        //     CreateGameDto {
-        //         account_id0,
-        //         account_id1,
-        //         game_type,
-        //         metadata
-        //     }
-        // ).await?;
+        let chess_game = crate::services::game_service::create_game(
+            &self.state,
+            CreateGameDto {
+                account_id0,
+                account_id1,
+                game_type,
+                metadata
+            }
+        ).await?;
 
-        // Ok(tonic::Response::new(shared::CreateGameResponse{
-        //     game_id: chess_game.id.clone(),
-        //     game_repr: chess_game.to_string()
-        // }))
+        Ok(tonic::Response::new(shared::CreateGameResponse{
+            game_id: chess_game.id.clone(),
+            game_repr: chess_game.to_string()
+        }))
     }
 
     async fn get_game_state(
