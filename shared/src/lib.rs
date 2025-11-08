@@ -37,3 +37,4 @@ pub use generated::game_service::game_service_server::{GameService, GameServiceS
 
 pub mod error;
 pub mod primitives;
+pub mod events;
