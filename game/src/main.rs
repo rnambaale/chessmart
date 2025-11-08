@@ -91,12 +91,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         server,
         tracing,
         redis,
+        nats
     } = ApiConfig::read_config_with_defaults();
 
     let state: AppState = AppStateBuilder::new()
         .with_server(Some(server))
         .with_tracing(tracing)
         .with_redis(Some(redis))
+        .with_nats(Some(nats))
         .build()
         .await?;
 
