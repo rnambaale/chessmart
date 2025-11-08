@@ -8,6 +8,9 @@ pub enum BunnyChessApiError {
     #[error(transparent)]
     RedisError(#[from] redis::RedisError),
 
+    #[error(transparent)]
+    NatsError(#[from] async_nats::Error),
+
     #[error("{0}")]
     UnknownGameTypeError(String),
 
