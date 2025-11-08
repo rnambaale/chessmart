@@ -1,5 +1,5 @@
 use rand::{seq::SliceRandom, thread_rng};
-use shared::error::BunnyChessApiError;
+use shared::{error::BunnyChessApiError, events::GameStartEvent};
 use tracing::debug;
 
 use crate::{jobs::{TaskMessage, TaskType, check_game_job::CheckGamePayload}, primitives::{AccountIds, ChessGame, CreateGameDto}, state::state::AppState};
@@ -32,13 +32,15 @@ pub async fn create_game(
     );
 
     crate::repositories::game_repository::store_game(state, &chess_game).await?;
-    /*
-    await this.streamService.emitGameStart({
-      accountId0,
-      accountId1,
-      gameId: chessGame.id,
-    });
-     */
+
+    crate::services::streaming_service::emit_game_start(
+        state,
+        GameStartEvent {
+            account_id_0: black_account_id.to_owned(),
+            account_id_1: black_account_id.to_string(),
+            game_id: chess_game.id.to_owned()
+        }
+    ).await?;
 
     add_game_to_check_queue(state, &chess_game).await?;
 
