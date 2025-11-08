@@ -12,6 +12,7 @@ members = [
 [workspace.dependencies]
 anyhow = "1.0.94"
 argon2 = "0.5.3"
+async-nats = "0.45.0"
 async-trait = "0.1.80"
 axum = "0.7.9"
 axum-extra = { version = "0.10.3" }
