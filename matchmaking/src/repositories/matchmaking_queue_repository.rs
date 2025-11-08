@@ -99,9 +99,9 @@ pub trait MatchmakingQueueContract: Send + Sync {
     ) -> Result<HashMap<String, QueueSize>, BunnyChessApiError>;
 }
 
-pub const MATCH_PLAYERS_SCRIPT: &str = include_str!("lua-scripts/match-players.lua");
-pub const ADD_PLAYER_TO_QUEUE_SCRIPT: &str = include_str!("lua-scripts/add-player-to-queue.lua");
-pub const REMOVE_PLAYER_FROM_QUEUE_SCRIPT: &str = include_str!("lua-scripts/remove-player-from-queue.lua");
+const MATCH_PLAYERS_SCRIPT: &str = include_str!("lua-scripts/match-players.lua");
+const ADD_PLAYER_TO_QUEUE_SCRIPT: &str = include_str!("lua-scripts/add-player-to-queue.lua");
+const REMOVE_PLAYER_FROM_QUEUE_SCRIPT: &str = include_str!("lua-scripts/remove-player-from-queue.lua");
 
 pub struct RedisMatchmakingQueue {
     client: redis::Client,
