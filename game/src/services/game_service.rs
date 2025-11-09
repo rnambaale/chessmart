@@ -1,5 +1,5 @@
 use rand::{seq::SliceRandom, thread_rng};
-use shared::{error::BunnyChessApiError, events::GameStartEvent};
+use shared::{error::BunnyChessApiError, events::{GameOverEvent, GameStartEvent}};
 use tracing::debug;
 
 use crate::{jobs::{TaskMessage, TaskType, check_game_job::CheckGamePayload}, primitives::{AccountIds, ChessGame, CreateGameDto}, state::state::AppState};
@@ -83,4 +83,64 @@ pub async fn get_game(
         Some(game) => Ok(game),
         None => Err(BunnyChessApiError::GameNotFoundError(format!("Couldn't find game {}", game_id)))
     }
+}
+
+pub async fn check_game_result(
+    state: &AppState,
+    chess_game: &ChessGame,
+) -> Result<(), BunnyChessApiError> {
+    let game_result = chess_game.check_game_result()?;
+    if game_result.is_none() {
+        return Ok(());
+    }
+
+    let result = game_result.unwrap();
+
+    let ChessGame {
+        account_ids,
+        id,
+        game_type,
+        metadata,
+        ..
+    } = chess_game;
+
+    crate::services::streaming_service::emit_game_over_event(
+        state,
+        GameOverEvent {
+            account_id_0: account_ids.w.to_owned(),
+            account_id_1: account_ids.b.to_owned(),
+            outcome: result.outcome.to_str().to_owned(),
+            game_over_reason: result.reason.to_str().to_owned(),
+            winner_account_id: result.winner_account_id,
+            game_id: id.to_string(),
+            game_type: game_type.to_str().to_owned(),
+            metadata: metadata.to_string()
+        }
+    ).await?;
+
+    debug!("Game {}: emitted game over event", chess_game.id);
+
+    remove_game_from_check_queue(state, chess_game).await?;
+
+    crate::repositories::game_repository::delete_game(
+        state,
+        &chess_game.id
+    ).await?;
+
+    Ok(())
+}
+
+async fn remove_game_from_check_queue(state: &AppState, chess_game: &ChessGame) -> Result<(), BunnyChessApiError> {
+  let ChessGame { id, ..} = chess_game;
+  let body = CheckGamePayload { game_id: id.to_string() };
+  let message_type = TaskType::CheckGameJob(body);
+  let message = TaskMessage { task: message_type };
+  let serialized_message = bincode::serialize(&message).unwrap();
+
+    let mut conn = state.redis.get_connection()?;
+    let _: () = redis::cmd("LPOP")
+        .arg(crate::jobs::check_game_job::CHECK_GAME_QUEUE_NAME)
+        .arg(serialized_message.clone())
+        .query(&mut conn)?;
+    Ok(())
 }

@@ -4,7 +4,7 @@ use shakmaty::{Chess, Color, Position};
 use shared::{error::BunnyChessApiError, primitives::GameType};
 use std::str::FromStr;
 
-// const MAX_MOVES: u64 = 300;
+const MAX_MOVES: u64 = 300;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountIds {
@@ -113,6 +113,77 @@ pub struct JsonRepr {
     pub resigned_color: Option<ColorWrapper>,
     pub seq: u64,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum GameOutcome {
+    #[serde(rename = "w")]
+    White,
+    #[serde(rename = "b")]
+    Black,
+    #[serde(rename = "draw")]
+    Draw,
+}
+
+impl GameOutcome {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            GameOutcome::White => "White",
+            GameOutcome::Black => "Black",
+            GameOutcome::Draw => "Draw",
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum GameOverReason {
+    Checkmate,
+    Stalemate,
+    FiftyMovesRule,
+    ThreefoldRepetition,
+    InsufficientMaterial,
+    WhiteTimeout,
+    BlackTimeout,
+    Resignation,
+    MaxMoves,
+}
+
+impl GameOverReason {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            GameOverReason::Checkmate => "Checkmate",
+            GameOverReason::Stalemate => "Stalemate",
+            GameOverReason::FiftyMovesRule => "FiftyMovesRule",
+            GameOverReason::ThreefoldRepetition => "ThreefoldRepetition",
+            GameOverReason::InsufficientMaterial => "InsufficientMaterial",
+            GameOverReason::WhiteTimeout => "WhiteTimeout",
+            GameOverReason::BlackTimeout => "BlackTimeout",
+            GameOverReason::Resignation => "Resignation",
+            GameOverReason::MaxMoves => "MaxMoves",
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GameResult {
+    pub outcome: GameOutcome,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub winner_account_id: Option<String>,
+    pub reason: GameOverReason,
+}
+
+/*
+export interface GameResult {
+  outcome: 'w' | 'b' | 'draw';
+  winnerAccountId?: string;
+  reason: GameOverReason;
+}
+*/
+
+// pub struct GameResult {
+//     pub outcome:
+// }
+
+// pub struct
 
 impl ChessGame {
     pub fn new(
@@ -263,8 +334,162 @@ impl ChessGame {
     }
 
     // fn update_clock(&mut self) {
-    //     // Implementation would go here
+    //     todo!()
     // }
+
+    /*
+
+    private updateClock(): number {
+        const now = Date.now();
+        const turnColor = this._chess.turn();
+        this._gameClocks[turnColor] = Math.max(
+            0,
+            this._gameClocks[turnColor] -
+                (now - (this._gameClocks.lastMoveTimestamp ?? this._gameClocks.startTimestamp)),
+        );
+        return now;
+    }
+     */
+
+    pub fn check_game_result(&self) -> Result<Option<GameResult>, BunnyChessApiError> {
+        let turn_color = self.chess.turn();
+        // self.update_clock();
+
+        if self.chess.is_checkmate() {
+            let winner_color = Self::get_other_color(turn_color);
+
+            let AccountIds { b, w } = self.account_ids.clone();
+
+            let winner_account_id = match winner_color {
+                Color::Black => b,
+                Color::White => w,
+            };
+
+            let outcome = match winner_color {
+                Color::Black => GameOutcome::Black,
+                Color::White => GameOutcome::White
+            };
+
+            let game_result = GameResult {
+                outcome,
+                reason: GameOverReason::Checkmate,
+                winner_account_id: Some(winner_account_id),
+            };
+
+            return Ok(Some(game_result));
+        }
+
+        if let Some(resigned_color) = self.resigned_color {
+            let resigned_color = Color::from(resigned_color);
+            let winner_color = Self::get_other_color(resigned_color);
+
+            let AccountIds { b, w } = self.account_ids.clone();
+
+            let winner_account_id = match winner_color {
+                Color::Black => b,
+                Color::White => w,
+            };
+
+            let outcome = match winner_color {
+                Color::Black => GameOutcome::Black,
+                Color::White => GameOutcome::White
+            };
+
+            let game_result = GameResult {
+                outcome,
+                reason: GameOverReason::Resignation,
+                winner_account_id: Some(winner_account_id),
+            };
+
+            return Ok(Some(game_result));
+        }
+
+        if self.chess.fullmoves().get() as u64 >= MAX_MOVES {
+            let game_result = GameResult {
+                outcome: GameOutcome::Draw,
+                reason: GameOverReason::MaxMoves,
+                winner_account_id: None,
+            };
+
+            return Ok(Some(game_result));
+        }
+
+        if let Some(outcome) = self.chess.outcome() {
+            if outcome.winner().is_none() {
+                if self.chess.is_stalemate() {
+                    let game_result = GameResult {
+                        outcome: GameOutcome::Draw,
+                        reason: GameOverReason::Stalemate,
+                        winner_account_id: None,
+                    };
+
+                    return Ok(Some(game_result));
+                }
+
+                if self.chess.is_insufficient_material() {
+                    let game_result = GameResult {
+                        outcome: GameOutcome::Draw,
+                        reason: GameOverReason::InsufficientMaterial,
+                        winner_account_id: None,
+                    };
+
+                    return Ok(Some(game_result));
+                }
+
+                let game_result = GameResult {
+                    outcome: GameOutcome::Draw,
+                    reason: GameOverReason::FiftyMovesRule,
+                    winner_account_id: None,
+                };
+
+                return Ok(Some(game_result));
+            }
+        }
+
+        // Clock timeout (must be the last check)
+        let game_clock = match turn_color {
+            Color::Black => self.game_clocks.b,
+            Color::White => self.game_clocks.w
+        };
+
+        if game_clock == 0 {
+            let winner_color = Self::get_other_color(turn_color);
+
+            let AccountIds { b, w } = self.account_ids.clone();
+
+            let winner_account_id = match winner_color {
+                Color::Black => b,
+                Color::White => w,
+            };
+
+            let game_over_reason = match winner_color {
+                Color::Black => GameOverReason::BlackTimeout,
+                Color::White => GameOverReason::WhiteTimeout,
+            };
+
+            let outcome = match winner_color {
+                Color::Black => GameOutcome::Black,
+                Color::White => GameOutcome::White
+            };
+
+            let game_result = GameResult {
+                outcome,
+                reason: game_over_reason,
+                winner_account_id: Some(winner_account_id),
+            };
+
+            return Ok(Some(game_result));
+        }
+
+        Ok(None)
+    }
+
+    fn get_other_color(color: Color) -> Color {
+        match color {
+            Color::Black => Color::White,
+            Color::White => Color::Black,
+        }
+    }
 }
 
 impl std::fmt::Display for ChessGame {

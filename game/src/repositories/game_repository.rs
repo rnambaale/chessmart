@@ -10,7 +10,6 @@ pub async fn store_game(
     chess_game: &ChessGame
 ) -> Result<(), BunnyChessApiError> {
     let game_key = get_game_key(chess_game.id.as_str());
-    // let mut connection = state.redis.connection.clone();
     let mut connection = state.redis.get_multiplexed_async_connection().await?;
 
     let _: () = redis::pipe()
@@ -48,4 +47,17 @@ pub async fn find_game(
         }
         None => Ok(None)
     }
+}
+
+pub async fn delete_game(
+    state: &AppState,
+    game_id: &str
+) -> Result<(), BunnyChessApiError> {
+    let game_key = get_game_key(game_id);
+
+    let mut connection = state.redis.get_multiplexed_async_connection().await?;
+
+    let result: () = connection.del(&game_key).await?;
+
+    Ok(result)
 }
