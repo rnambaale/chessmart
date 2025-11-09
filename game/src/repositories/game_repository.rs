@@ -1,3 +1,4 @@
+use redis::AsyncCommands;
 use shared::error::BunnyChessApiError;
 
 use crate::{primitives::ChessGame, state::state::AppState};
@@ -25,4 +26,26 @@ pub async fn store_game(
 
 fn get_game_key(game_id: &str) -> String {
     format!("game:chess-game:{}:status", game_id)
+}
+
+pub async fn find_game(
+    state: &AppState,
+    game_id: &str
+) -> Result<Option<ChessGame>, BunnyChessApiError> {
+    let game_key = get_game_key(game_id);
+
+    let mut connection = state.redis.get_multiplexed_async_connection().await?;
+
+    let game_repr: Option<String> = connection.hget(&game_key, "gameRepr").await?;
+
+    match game_repr {
+        Some(repr) => {
+            // let game = ChessGame::from_string(&repr)
+            //     .map_err(|e| BunnyChessApiError::ParseJsonError(e.to_string()))?;
+            let game = ChessGame::from_string(&repr)?;
+
+            Ok(Some(game))
+        }
+        None => Ok(None)
+    }
 }

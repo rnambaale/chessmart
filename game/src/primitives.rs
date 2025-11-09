@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use shakmaty::{Chess, Color, Position};
-use shared::primitives::GameType;
+use shared::{error::BunnyChessApiError, primitives::GameType};
+use std::str::FromStr;
 
 // const MAX_MOVES: u64 = 300;
 
@@ -218,6 +219,28 @@ impl ChessGame {
 
     pub fn to_string(&self) -> String {
         self.to_json().unwrap_or_else(|_| "{}".to_string())
+    }
+
+    pub fn from_string(game_repr: &str) -> Result<Self, BunnyChessApiError> {
+        let json_repr = serde_json::from_str::<JsonRepr>(game_repr)?;
+        let JsonRepr {
+            id ,
+            game_type,
+            account_ids,
+            metadata,
+            game_rules,
+            game_clocks,
+            resigned_color, ..} = json_repr;
+        Ok(Self {
+            id,
+            game_type: GameType::from_str(&game_type)?,
+            account_ids,
+            chess: Chess::new(),
+            metadata,
+            game_rules,
+            game_clocks,
+            resigned_color
+        })
     }
 
     // fn get_pgn(&self) -> String {

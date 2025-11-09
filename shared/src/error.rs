@@ -14,6 +14,9 @@ pub enum BunnyChessApiError {
     #[error("{0}")]
     UnknownGameTypeError(String),
 
+    #[error("{0}")]
+    GameNotFoundError(String),
+
     // #[error("Session not found error {0}")]
     // SessionNotFoundError(String),
 

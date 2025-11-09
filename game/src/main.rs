@@ -58,9 +58,18 @@ impl shared::GameService for GameGatewayService {
 
     async fn get_game_state(
         &self,
-        _request: tonic::Request<shared::GetGameStateRequest>,
+        request: tonic::Request<shared::GetGameStateRequest>,
     ) -> Result<tonic::Response<shared::GetGameStateResponse>, tonic::Status> {
-        todo!()
+        let shared::GetGameStateRequest { game_id } = request.into_inner();
+
+        let chess_game = crate::services::game_service::get_game(
+            &self.state,
+            game_id.as_str()
+        ).await?;
+
+        Ok(tonic::Response::new(shared::GetGameStateResponse{
+            game_repr: chess_game.to_string()
+        }))
     }
 
     async fn check_game_result(

@@ -69,3 +69,18 @@ async fn add_game_to_check_queue(state: &AppState, chess_game: &ChessGame) -> Re
         .query(&mut conn)?;
     Ok(())
 }
+
+pub async fn get_game(
+    state: &AppState,
+    game_id: &str,
+) -> Result<ChessGame, BunnyChessApiError> {
+    let game_option = crate::repositories::game_repository::find_game(
+        state,
+        game_id
+    ).await?;
+
+    match game_option {
+        Some(game) => Ok(game),
+        None => Err(BunnyChessApiError::GameNotFoundError(format!("Couldn't find game {}", game_id)))
+    }
+}
