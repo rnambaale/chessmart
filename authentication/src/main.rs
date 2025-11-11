@@ -169,6 +169,11 @@ impl shared::AccountService for AccountGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // match dotenvy::dotenv() {
+    //     Ok(path) => println!(".env read successfully from {}", path.display()),
+    //     Err(e) => panic!("Could not load .env file: {e}"),
+    // };
+    dotenvy::dotenv().ok();
 
     let ApiConfig {
         server,
