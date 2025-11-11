@@ -24,7 +24,6 @@ async fn main() -> anyhow::Result<()> {
 
     let ApiConfig {
         server,
-        database,
         tracing,
         redis,
         token_secret,
@@ -34,7 +33,6 @@ async fn main() -> anyhow::Result<()> {
 
     let state = AppStateBuilder::new()
         .with_server(Some(server))
-        .with_db(Some(database))
         .with_tracing(tracing)
         .with_redis(Some(redis))
         .with_token_secret(Some(token_secret))

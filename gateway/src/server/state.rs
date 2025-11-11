@@ -1,7 +1,7 @@
 use shared::generated::{account_service::account_service_client::AccountServiceClient, game_service::game_service_client::GameServiceClient, matchmaker_service::matchmaker_service_client::MatchmakerServiceClient, ranking_service::ranking_service_client::RankingServiceClient};
 use tonic::transport::Channel;
 
-use crate::{config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, database::{postgres::PostgresDB, Database}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
+use crate::{config::{ApiConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
 
 type AccountGrpcClient = AccountServiceClient<Channel>;
 pub type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
@@ -9,8 +9,7 @@ type RankingGrpcClient = RankingServiceClient<Channel>;
 pub type GameGrpcClient = GameServiceClient<Channel>;
 
 #[derive(Clone)]
-pub struct AppState<DB: Database = PostgresDB> {
-    pub db: DB,
+pub struct AppState {
     pub config: ApiConfig,
     pub redis: RedisClient,
     pub account_client: AccountGrpcClient,
@@ -19,12 +18,8 @@ pub struct AppState<DB: Database = PostgresDB> {
     pub game_client: GameGrpcClient,
 }
 
-impl<DB> AppState<DB>
-where
-    DB: Database,
-{
+impl AppState {
     pub fn new(
-        db: DB,
         config: ApiConfig,
         redis: RedisClient,
         account_client: AccountGrpcClient,
@@ -33,7 +28,6 @@ where
         game_client: GameGrpcClient,
     ) -> Self {
         Self {
-            db,
             config,
             redis,
             account_client,
@@ -46,7 +40,6 @@ where
 
 #[derive(Debug, Default)]
 pub struct AppStateBuilder {
-    db_config: Option<DatabaseConfig>,
     server_config: Option<ServerConfig>,
     tracing_config: Option<TracingConfig>,
     redis_config: Option<RedisConfig>,
@@ -56,17 +49,11 @@ pub struct AppStateBuilder {
 impl AppStateBuilder {
     pub fn new() -> Self {
         AppStateBuilder {
-            db_config: None,
             server_config: None,
             tracing_config: None,
             redis_config: None,
             token_secret_config: None,
         }
-    }
-
-    pub fn with_db(mut self, db_config: Option<DatabaseConfig>) -> Self {
-        self.db_config = db_config;
-        self
     }
 
     pub fn with_redis(mut self, redis_config: Option<RedisConfig>) -> Self {
@@ -89,11 +76,7 @@ impl AppStateBuilder {
         self
     }
 
-    pub async fn build(self) -> Result<AppState<PostgresDB>, BunnyChessApiError> {
-        let db_config = self.db_config.expect("db-config not set");
-        let db = PostgresDB::new(&db_config).await?;
-        db.migrate().await;
-
+    pub async fn build(self) -> Result<AppState, BunnyChessApiError> {
         let redis_config = self.redis_config.expect("redis-config not set");
         let redis = RedisDB::new(&redis_config).await?;
 
@@ -120,10 +103,8 @@ impl AppStateBuilder {
         let game_client = GameServiceClient::new(game_channel.clone());
 
         Ok(AppState::new(
-            db,
             ApiConfig::new(
                 self.server_config.unwrap_or_default(),
-                db_config,
                 self.tracing_config,
                 redis_config,
                 token_secret_config,

@@ -8,31 +8,10 @@ pub struct Opts {
     pub server: ServerConfig,
 
     #[clap(flatten)]
-    pub database: DatabaseConfig,
-
-    #[clap(flatten)]
     pub tracing: Option<TracingConfig>,
 
     #[clap(flatten)]
     pub redis: RedisConfig,
-}
-
-#[derive(Debug, Clone, Parser)]
-pub struct DatabaseConfig {
-    #[clap(long, env = "DATABASE_URL")]
-    pub db_url: String,
-
-    #[clap(long, default_value_t = 5, env = "MAX_DB_CONNECTIONS")]
-    pub max_connections: u32,
-}
-
-impl Default for DatabaseConfig {
-    fn default() -> Self {
-        Self {
-            db_url: "".to_owned(),
-            max_connections: 5,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -121,7 +100,6 @@ pub struct TracingConfig {
 pub struct ApiConfig {
     pub server: ServerConfig,
     pub tracing: Option<TracingConfig>,
-    pub database: DatabaseConfig,
     pub redis: RedisConfig,
     pub token_secret: TokenSecretConfig,
 }
@@ -131,7 +109,6 @@ impl From<(Opts, TokenSecretConfig)> for ApiConfig {
         Self {
             server: opts.server,
             tracing: opts.tracing,
-            database: opts.database,
             redis: opts.redis,
             token_secret
         }
@@ -152,14 +129,12 @@ impl ApiConfig {
     #[allow(clippy::too_many_arguments)]
     pub const fn new(
         server: ServerConfig,
-        database: DatabaseConfig,
         tracing: Option<TracingConfig>,
         redis: RedisConfig,
         token_secret: TokenSecretConfig,
     ) -> Self {
         Self {
             server,
-            database,
             tracing,
             redis,
             token_secret,
