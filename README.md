@@ -2,7 +2,14 @@
 
 #### _Built with [Axum](https://github.com/tokio-rs/axum/) [PostgreSQL](https://www.postgresql.org/) and [Redis](https://redis.io/)._
 
-This is a toy project designed to experiment with using Axum to build a RESTful API service.
+## Introduction
+This is a toy project designed to experiment with building Rust-based micoriservices and gRPC, leveraging NATS JetStream and its persistent storage to demonstrate how this stack can build fault tolerant distributed systems. The microservices are stateless and can be scaled horizontally while using Redis to maintain the game state.
 
-## Running the API
-RUST_LOG=debug RUST_BACKTRACE=1 APP_ENV=dev cargo run
+## Quick start
+Clone this repository
+
+Start all services by running
+
+```sh
+docker compose up -d
+```
