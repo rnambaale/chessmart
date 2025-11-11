@@ -1,6 +1,5 @@
 pub mod config;
 pub mod constants;
-// pub mod database;
 pub mod error;
 pub mod dtos;
 pub mod redis;
