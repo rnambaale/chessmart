@@ -18,7 +18,7 @@ impl Worker {
 
         loop {
             let outcome: Option<Vec<u8>> = {
-                let mut conn = self.state.redis.get_connection().unwrap();
+                let mut conn = self.state.redis.get_connection()?;
 
                 redis::cmd("RPOP")
                     .arg(crate::jobs::check_game_job::CHECK_GAME_JOB_NAME)

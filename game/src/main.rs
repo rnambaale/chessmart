@@ -108,6 +108,8 @@ impl shared::GameService for GameGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenvy::dotenv().ok();
+
     let ApiConfig {
         server,
         tracing,
