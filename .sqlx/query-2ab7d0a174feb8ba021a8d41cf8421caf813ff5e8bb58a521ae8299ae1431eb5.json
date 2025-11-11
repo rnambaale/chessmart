@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, account_id, ranked_mmr, normal_mmr, created_at\n            FROM rankings\n            WHERE account_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "account_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "ranked_mmr",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "normal_mmr",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "2ab7d0a174feb8ba021a8d41cf8421caf813ff5e8bb58a521ae8299ae1431eb5"
+}
