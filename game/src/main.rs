@@ -108,7 +108,8 @@ impl shared::GameService for GameGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::dotenv().ok();
+    let crate_dir = env!("CARGO_MANIFEST_DIR");
+    dotenvy::from_filename(format!("{}/.env", crate_dir)).ok();
 
     let ApiConfig {
         server,

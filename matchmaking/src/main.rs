@@ -156,12 +156,8 @@ impl RankingService for RankingGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::dotenv().ok();
-
-    // match dotenvy::dotenv() {
-    //     Ok(path) => println!(".env read successfully from {}", path.display()),
-    //     Err(e) => panic!("Could not load .env file: {e}"),
-    // };
+    let crate_dir = env!("CARGO_MANIFEST_DIR");
+    dotenvy::from_filename(format!("{}/.env", crate_dir)).ok();
 
     let ApiConfig {
         server,

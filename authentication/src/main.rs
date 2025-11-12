@@ -169,11 +169,8 @@ impl shared::AccountService for AccountGatewayService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // match dotenvy::dotenv() {
-    //     Ok(path) => println!(".env read successfully from {}", path.display()),
-    //     Err(e) => panic!("Could not load .env file: {e}"),
-    // };
-    dotenvy::dotenv().ok();
+    let crate_dir = env!("CARGO_MANIFEST_DIR");
+    dotenvy::from_filename(format!("{}/.env", crate_dir)).ok();
 
     let ApiConfig {
         server,
