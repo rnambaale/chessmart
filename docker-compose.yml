@@ -1,0 +1,57 @@
+name: bunnychess_rs
+
+services:
+  postgres-auth:
+    container_name: postgres-auth
+    image: postgres:15.3
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+
+  postgres-matchmaking:
+    container_name: postgres-matchmaking
+    image: postgres:15.3
+    environment:
+      POSTGRES_DB: matchmaking_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_matchmaking_data:/var/lib/postgresql/data
+
+  redis:
+    container_name: redis
+    image: redis:7.2.3-alpine3.18
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ['redis-server', '--requirepass', 'password']
+
+  nats:
+    container_name: nats
+    image: nats:2.10.6-alpine3.18
+    command: ['-js', '-m', '8222', '--user', 'nats', '--pass', 'password', '--store_dir', '/data/js']
+    ports:
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222
+    volumes:
+      - nats_data:/data/js
+
+volumes:
+  postgres_auth_data:
+  postgres_matchmaking_data:
+  redis_data:
+  nats_data:
+  cargo-cache:
+
+networks:
+  postgres:
+    driver: bridge
