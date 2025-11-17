@@ -44,6 +44,7 @@ utoipa = { workspace = true, features = ["axum_extras", "uuid", "chrono"] }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 uuid = { workspace = true, features = ["serde", "v4"] }
 shared = { path = "../shared" }
+socketioxide = { workspace = true, features = ["state", "extensions"] }
 
 [dependencies.tonic]
 version = "0.10"
