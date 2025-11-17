@@ -4,7 +4,7 @@ use axum::{extract::{ConnectInfo, State, WebSocketUpgrade, ws::{Message, WebSock
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{server::state::{AppState, GameGrpcClient, MatchmakingGrpcClient}, utils::claim::UserClaims};
+use crate::{server::state::AppState, utils::claim::UserClaims};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -41,26 +41,26 @@ struct ChatData {
 #[derive(Debug, Deserialize)]
 struct AddToQueueDto {
     #[serde(rename = "gameType")]
-    game_type: String,
-    ranked: bool,
+    _game_type: String,
+    _ranked: bool,
 }
 
 #[derive(Debug, Deserialize)]
 struct RemoveFromQueueDto {
     #[serde(rename = "accountId")]
-    account_id: String,
+    _account_id: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct AcceptPendingGameDto {
     #[serde(rename = "pendingGameId")]
-    pending_game_id: String,
+    _pending_game_id: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct JoinGameDto {
     #[serde(rename = "gameId")]
-    game_id: String,
+    _game_id: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,9 +69,9 @@ enum ServerMessage {
     EventAck { received: bool },
     ChatAck { delivered: bool },
     Pong,
-    Ack,
+    // Ack,
 
-    JoinGame { game_repr: String }
+    // JoinGame { game_repr: String }
 }
 
 /// The handler for the HTTP request (this gets called when the HTTP request lands at the start
@@ -90,7 +90,7 @@ pub async fn ws_handler(
 }
 
 /// Actual websocket statemachine (one will be spawned per connection)
-async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid, state: AppState) {
+async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, _user_id: Uuid, _state: AppState) {
     while let Some(msg) = socket.recv().await {
         if let Ok(Message::Text(text)) = msg {
             tracing::debug!("raw message on {}", text.clone());
@@ -107,32 +107,32 @@ async fn handle_socket(mut socket: WebSocket, _who: SocketAddr, user_id: Uuid, s
                             handle_ping(&mut socket).await;
                         }
 
-                        ClientMessage::MatchMakingAddToQueue(data) => {
-                            let matchmaking_grpc_client = state.matchmaking_client.clone();
-                            handle_add_to_queue(data, user_id, &mut socket, matchmaking_grpc_client).await;
+                        ClientMessage::MatchMakingAddToQueue(_data) => {
+                            // let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            // handle_add_to_queue(data, user_id, &mut socket, matchmaking_grpc_client).await;
                         }
 
-                        ClientMessage::MatchMakingRemoveFromQueue(data) => {
-                            let matchmaking_grpc_client = state.matchmaking_client.clone();
-                            handle_remove_from_queue(data, &mut socket, matchmaking_grpc_client).await;
+                        ClientMessage::MatchMakingRemoveFromQueue(_data) => {
+                            // let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            // handle_remove_from_queue(data, &mut socket, matchmaking_grpc_client).await;
                         }
 
-                        ClientMessage::MatchMakingAcceptPendingGame(data) => {
-                            let matchmaking_grpc_client = state.matchmaking_client.clone();
-                            handle_accept_pending_game(data, user_id, &mut socket, matchmaking_grpc_client).await;
+                        ClientMessage::MatchMakingAcceptPendingGame(_data) => {
+                            // let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            // handle_accept_pending_game(data, user_id, &mut socket, matchmaking_grpc_client).await;
                         }
 
-                        ClientMessage::MatchMakingJoinGame(data) => {
-                            let matchmaking_grpc_client = state.matchmaking_client.clone();
-                            let game_grpc_client = state.game_client.clone();
+                        ClientMessage::MatchMakingJoinGame(_data) => {
+                            // let matchmaking_grpc_client = state.matchmaking_client.clone();
+                            // let game_grpc_client = state.game_client.clone();
 
-                            handle_join_game(
-                                data,
-                                user_id,
-                                &mut socket,
-                                matchmaking_grpc_client,
-                                game_grpc_client
-                            ).await;
+                            // handle_join_game(
+                            //     data,
+                            //     user_id,
+                            //     &mut socket,
+                            //     matchmaking_grpc_client,
+                            //     game_grpc_client
+                            // ).await;
                         }
                     }
                 }
@@ -170,96 +170,96 @@ async fn handle_ping(socket: &mut WebSocket) {
     }
 }
 
-async fn handle_add_to_queue(
-    payload: AddToQueueDto,
-    account_id: Uuid,
-    socket: &mut WebSocket,
-    mut client: MatchmakingGrpcClient,
-) {
-    println!("Add to queue game_type: {}, ranked: {}", payload.game_type, payload.ranked);
+// async fn handle_add_to_queue(
+//     payload: AddToQueueDto,
+//     account_id: Uuid,
+//     socket: &mut WebSocket,
+//     mut client: MatchmakingGrpcClient,
+// ) {
+//     println!("Add to queue game_type: {}, ranked: {}", payload.game_type, payload.ranked);
 
-    client.add_to_queue(shared::AddToQueueRequest{
-        account_id: account_id.to_string(),
-        game_type: payload.game_type,
-        ranked: payload.ranked,
-    }).await.expect("Failed to add player to queue.");
+//     client.add_to_queue(shared::AddToQueueRequest{
+//         account_id: account_id.to_string(),
+//         game_type: payload.game_type,
+//         ranked: payload.ranked,
+//     }).await.expect("Failed to add player to queue.");
 
-    let response = ServerMessage::Ack;
-    if let Ok(json) = serde_json::to_string(&response) {
-        let _ = socket.send(Message::Text(json)).await;
-    }
-}
+//     let response = ServerMessage::Ack;
+//     if let Ok(json) = serde_json::to_string(&response) {
+//         let _ = socket.send(Message::Text(json)).await;
+//     }
+// }
 
-async fn handle_remove_from_queue(
-    payload: RemoveFromQueueDto,
-    socket: &mut WebSocket,
-    mut client: MatchmakingGrpcClient,
-) {
-    println!("Remove from queue account_id: {}", payload.account_id);
+// async fn handle_remove_from_queue(
+//     payload: RemoveFromQueueDto,
+//     socket: &mut WebSocket,
+//     mut client: MatchmakingGrpcClient,
+// ) {
+//     println!("Remove from queue account_id: {}", payload.account_id);
 
-    client.remove_from_queue(shared::RemoveFromQueueRequest {
-        account_id: payload.account_id,
-    }).await.expect("Failed to remove player from queue.");
+//     client.remove_from_queue(shared::RemoveFromQueueRequest {
+//         account_id: payload.account_id,
+//     }).await.expect("Failed to remove player from queue.");
 
-    let response = ServerMessage::Ack;
+//     let response = ServerMessage::Ack;
 
-    if let Ok(json) = serde_json::to_string(&response) {
-        let _ = socket.send(Message::Text(json)).await;
-    }
-}
+//     if let Ok(json) = serde_json::to_string(&response) {
+//         let _ = socket.send(Message::Text(json)).await;
+//     }
+// }
 
-async fn handle_accept_pending_game(
-    payload: AcceptPendingGameDto,
-    account_id: Uuid,
-    socket: &mut WebSocket,
-    mut client: MatchmakingGrpcClient,
-) {
-    println!("Accept pending game account_id: {}", account_id);
+// async fn handle_accept_pending_game(
+//     payload: AcceptPendingGameDto,
+//     account_id: Uuid,
+//     socket: &mut WebSocket,
+//     mut client: MatchmakingGrpcClient,
+// ) {
+//     println!("Accept pending game account_id: {}", account_id);
 
-    client.accept_pending_game(shared::AcceptPendingGameRequest {
-        account_id: account_id.to_string(),
-        pending_game_id: payload.pending_game_id,
-    }).await.expect("Failed to accept pending game.");
+//     client.accept_pending_game(shared::AcceptPendingGameRequest {
+//         account_id: account_id.to_string(),
+//         pending_game_id: payload.pending_game_id,
+//     }).await.expect("Failed to accept pending game.");
 
-    let response = ServerMessage::Ack;
+//     let response = ServerMessage::Ack;
 
-    if let Ok(json) = serde_json::to_string(&response) {
-        let _ = socket.send(Message::Text(json)).await;
-    }
-}
+//     if let Ok(json) = serde_json::to_string(&response) {
+//         let _ = socket.send(Message::Text(json)).await;
+//     }
+// }
 
-async fn handle_join_game(
-    payload: JoinGameDto,
-    account_id: Uuid,
-    socket: &mut WebSocket,
-    mut matchmaking_client: MatchmakingGrpcClient,
-    mut game_client: GameGrpcClient,
-) {
-    let shared::GetAccountStatusResponse {
-        status, game_id, ..
-    } = matchmaking_client
-        .get_account_status(shared::GetAccountStatusRequest {
-            account_id: account_id.to_string()
-        })
-        .await
-        .expect("Failed to get account status")
-        .into_inner();
+// async fn handle_join_game(
+//     payload: JoinGameDto,
+//     account_id: Uuid,
+//     socket: &mut WebSocket,
+//     mut matchmaking_client: MatchmakingGrpcClient,
+//     mut game_client: GameGrpcClient,
+// ) {
+//     let shared::GetAccountStatusResponse {
+//         status, game_id, ..
+//     } = matchmaking_client
+//         .get_account_status(shared::GetAccountStatusRequest {
+//             account_id: account_id.to_string()
+//         })
+//         .await
+//         .expect("Failed to get account status")
+//         .into_inner();
 
-    if status == "playing" && game_id == Some(payload.game_id.to_owned()) {
-        // socket.join(payload.game_id.to_owned())
-    }
+//     if status == "playing" && game_id == Some(payload.game_id.to_owned()) {
+//         // socket.join(payload.game_id.to_owned())
+//     }
 
-    let shared::GetGameStateResponse { game_repr } = game_client
-        .get_game_state(shared::GetGameStateRequest {
-            game_id: payload.game_id.to_owned()
-        })
-        .await
-        .expect("Failed to get game state.")
-        .into_inner();
+//     let shared::GetGameStateResponse { game_repr } = game_client
+//         .get_game_state(shared::GetGameStateRequest {
+//             game_id: payload.game_id.to_owned()
+//         })
+//         .await
+//         .expect("Failed to get game state.")
+//         .into_inner();
 
-    let response = ServerMessage::JoinGame { game_repr };
+//     let response = ServerMessage::JoinGame { game_repr };
 
-    if let Ok(json) = serde_json::to_string(&response) {
-        let _ = socket.send(Message::Text(json)).await;
-    }
-}
+//     if let Ok(json) = serde_json::to_string(&response) {
+//         let _ = socket.send(Message::Text(json)).await;
+//     }
+// }

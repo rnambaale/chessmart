@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post}, Router
 };
 
+use socketioxide::{SocketIo, handler::ConnectHandler};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use utoipa::OpenApi;
@@ -20,15 +21,34 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
 
+    let (layer, io) = SocketIo::new_layer();
+
+    // let (layer, io) = SocketIo::builder()
+    //     .with_state(state.clone())
+    //     .build_layer();
+
+    io.ns("/", crate::handlers::on_connect.with(crate::handlers::authenticate_middleware));
+
+    // io.ns("/socket.io", |s: SocketRef| {
+    //     s.on("matchmaking:add-to-queue", crate::routes::matchmaking::handle_add_to_queue);
+    //     s.on("matchmaking:remove-from-queue", crate::routes::matchmaking::handle_remove_from_queue);
+    //     s.on("matchmaking:accept-pending-game", crate::routes::matchmaking::handle_accept_pending_game);
+    //     s.on("matchmaking:join-game", crate::routes::matchmaking::handle_join_game);
+    //     s.on("matchmaking:join-lobby", crate::routes::matchmaking::handle_join_lobby);
+    //     s.on("matchmaking:leave-lobby", crate::routes::matchmaking::handle_leave_lobby);
+    // });
+
     axum::serve(
         listener,
-        app(state).layer(
-            CorsLayer::new()
-                .allow_origin(Any)
-                .allow_headers(Any)
-                .allow_methods(Any)
-                .expose_headers(Any),
-        )
+        app(state)
+            .layer(
+                CorsLayer::new()
+                    .allow_origin(Any)
+                    .allow_headers(Any)
+                    .allow_methods(Any)
+                    .expose_headers(Any),
+            )
+            .layer(layer)
         //.into_make_service()
         .into_make_service_with_connect_info::<SocketAddr>()
     ).await?;
