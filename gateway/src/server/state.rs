@@ -1,7 +1,7 @@
 use shared::generated::{account_service::account_service_client::AccountServiceClient, game_service::game_service_client::GameServiceClient, matchmaker_service::matchmaker_service_client::MatchmakerServiceClient, ranking_service::ranking_service_client::RankingServiceClient};
 use tonic::transport::Channel;
 
-use crate::{config::{ApiConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
+use crate::{client::nats::{NatsDB, NatsJetstreamContext}, config::{ApiConfig, NatsConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, error::BunnyChessApiError, redis::redis::{RedisClient, RedisDB}};
 
 type AccountGrpcClient = AccountServiceClient<Channel>;
 pub type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
@@ -16,6 +16,7 @@ pub struct AppState {
     pub matchmaking_client: MatchmakingGrpcClient,
     pub ranking_client: RankingGrpcClient,
     pub game_client: GameGrpcClient,
+    pub jetstream: NatsJetstreamContext,
 }
 
 impl AppState {
@@ -26,6 +27,7 @@ impl AppState {
         matchmaking_client: MatchmakingGrpcClient,
         ranking_client: RankingGrpcClient,
         game_client: GameGrpcClient,
+        jetstream: NatsJetstreamContext,
     ) -> Self {
         Self {
             config,
@@ -34,6 +36,7 @@ impl AppState {
             matchmaking_client,
             ranking_client,
             game_client,
+            jetstream,
         }
     }
 }
@@ -44,6 +47,7 @@ pub struct AppStateBuilder {
     tracing_config: Option<TracingConfig>,
     redis_config: Option<RedisConfig>,
     token_secret_config: Option<TokenSecretConfig>,
+    nats_config: Option<NatsConfig>,
 }
 
 impl AppStateBuilder {
@@ -53,11 +57,17 @@ impl AppStateBuilder {
             tracing_config: None,
             redis_config: None,
             token_secret_config: None,
+            nats_config: None,
         }
     }
 
     pub fn with_redis(mut self, redis_config: Option<RedisConfig>) -> Self {
         self.redis_config = redis_config;
+        self
+    }
+
+    pub fn with_nats(mut self, nats_config: Option<NatsConfig>) -> Self {
+        self.nats_config = nats_config;
         self
     }
 
@@ -102,18 +112,23 @@ impl AppStateBuilder {
             .await?;
         let game_client = GameServiceClient::new(game_channel.clone());
 
+        let nats_config = self.nats_config.expect("nats-config not set");
+        let jetstream = NatsDB::new(&nats_config).await?;
+
         Ok(AppState::new(
             ApiConfig::new(
                 self.server_config.unwrap_or_default(),
                 self.tracing_config,
                 redis_config,
                 token_secret_config,
+                nats_config,
             ),
             redis,
             account_client,
             matchmaking_client,
             ranking_client,
             game_client,
+            jetstream,
         ))
     }
 }

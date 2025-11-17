@@ -17,6 +17,9 @@ pub enum BunnyChessApiError {
     #[error(transparent)]
     RedisError(#[from] redis::RedisError),
 
+    #[error(transparent)]
+    NatsError(#[from] async_nats::Error),
+
     #[error("{0}")]
     HashError(String),
 
@@ -85,6 +88,12 @@ impl BunnyChessApiError {
       ),
       RedisError(_err) => (
         "REDIS_ERROR".to_string(),
+        None,
+        vec![],
+        StatusCode::INTERNAL_SERVER_ERROR,
+      ),
+      NatsError(_err) => (
+        "NATS_ERROR".to_string(),
         None,
         vec![],
         StatusCode::INTERNAL_SERVER_ERROR,

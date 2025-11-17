@@ -27,6 +27,7 @@ async fn main() -> anyhow::Result<()> {
         tracing,
         redis,
         token_secret,
+        nats,
     } = ApiConfig::read_config_with_defaults();
 
     init_tracing(tracing.clone())?;
@@ -36,6 +37,7 @@ async fn main() -> anyhow::Result<()> {
         .with_tracing(tracing)
         .with_redis(Some(redis))
         .with_token_secret(Some(token_secret))
+        .with_nats(Some(nats))
         .build()
         .await?;
 
