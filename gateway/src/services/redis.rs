@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{constants::EXPIRE_SESSION_CODE_SECS, error::BunnyChessApiError, redis::redis::{RedisClient, RedisClientExt}};
+use crate::{constants::EXPIRE_SESSION_CODE_SECS, error::BunnyChessApiError, client::redis::{RedisClient, RedisClientExt}};
 
 pub trait RedisKey: Debug + Display {
   type Value: Serialize + DeserializeOwned + Debug;

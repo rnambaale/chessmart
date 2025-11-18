@@ -1,7 +1,7 @@
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{error::BunnyChessApiError, redis::redis::RedisClient, services::redis::SessionKey, utils::claim::UserClaims};
+use crate::{error::BunnyChessApiError, client::redis::RedisClient, services::redis::SessionKey, utils::claim::UserClaims};
 
 pub async fn set(redis: &RedisClient, user_id: Uuid) -> Result<Uuid, BunnyChessApiError> {
   let (key, value) = generate(user_id);

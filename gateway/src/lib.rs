@@ -3,7 +3,6 @@ pub mod config;
 pub mod constants;
 pub mod error;
 pub mod dtos;
-pub mod redis;
 pub mod routes;
 pub mod server;
 pub mod services;
