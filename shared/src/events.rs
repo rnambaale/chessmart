@@ -51,3 +51,42 @@ impl GameEvent {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PendingGameReadyEvent {
+    pub account_id_0: String,
+    pub account_id_1: String,
+    pub pending_game_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PendingGameTimeoutEvent {
+    pub account_id_0: String,
+    pub account_id_1: String,
+    pub pending_game_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EloChangeEvent {
+    pub account_id: String,
+    pub new_elo: i32,
+    pub elo_change: i32,
+    pub ranked: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum MatchmakingEvent {
+    PendingGameReady(PendingGameReadyEvent),
+    PendingGameTimeout(PendingGameTimeoutEvent),
+    EloChange(EloChangeEvent),
+}
+
+impl MatchmakingEvent {
+    pub fn subject(&self) -> &'static str {
+        match self {
+            MatchmakingEvent::PendingGameReady(_) => "bunnychess.matchmaking.pending-game-ready",
+            MatchmakingEvent::PendingGameTimeout(_) => "bunnychess.matchmaking.pending-game-timeout",
+            MatchmakingEvent::EloChange(_) => "bunnychess.matchmaking.elo-change",
+        }
+    }
+}
