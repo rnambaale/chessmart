@@ -2109,6 +2109,7 @@ name = "matchmaking"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-nats",
  "async-trait",
  "chrono",
  "clap",
@@ -2118,6 +2119,7 @@ dependencies = [
  "opentelemetry_sdk",
  "prost",
  "redis",
+ "serde_json",
  "shared",
  "sqlx",
  "tokio",
