@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     routing::{get, post}, Router
@@ -37,6 +37,16 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
     //     s.on("matchmaking:join-lobby", crate::routes::matchmaking::handle_join_lobby);
     //     s.on("matchmaking:leave-lobby", crate::routes::matchmaking::handle_leave_lobby);
     // });
+
+    let state_for_consumer = state.clone();
+    let socket_io = Arc::new(io);
+
+    tokio::spawn(async move {
+        if let Err(e) = crate::listeners::game::game_consumer(state_for_consumer, socket_io).await {
+            eprintln!("Event consumer failed: {}", e);
+        }
+    });
+
 
     axum::serve(
         listener,

@@ -22,6 +22,7 @@ chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["env", "derive"] }
 dotenvy = { workspace = true }
 fake = { workspace = true, features = ["derive", "uuid", "chrono"] }
+futures = { workspace = true }
 hyper = { workspace = true }
 jsonwebtoken = { workspace = true }
 opentelemetry = { workspace = true }
