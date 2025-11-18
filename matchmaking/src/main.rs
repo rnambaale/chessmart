@@ -164,6 +164,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         database,
         tracing,
         redis,
+        nats,
     } = ApiConfig::read_config_with_defaults();
 
     init_tracing(tracing.clone())?;
@@ -173,6 +174,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_db(Some(database))
         .with_tracing(tracing)
         .with_redis(Some(redis))
+        .with_nats(Some(nats))
         .build()
         .await?;
 

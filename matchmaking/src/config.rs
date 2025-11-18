@@ -15,6 +15,9 @@ pub struct Opts {
 
     #[clap(flatten)]
     pub redis: RedisConfig,
+
+    #[clap(flatten)]
+    pub nats: NatsConfig,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -108,6 +111,7 @@ pub struct ApiConfig {
     pub tracing: Option<TracingConfig>,
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
+    pub nats: NatsConfig,
 }
 
 impl From<Opts> for ApiConfig {
@@ -117,6 +121,7 @@ impl From<Opts> for ApiConfig {
             tracing: opts.tracing,
             database: opts.database,
             redis: opts.redis,
+            nats: opts.nats,
         }
     }
 }
@@ -136,12 +141,45 @@ impl ApiConfig {
         database: DatabaseConfig,
         tracing: Option<TracingConfig>,
         redis: RedisConfig,
+        nats: NatsConfig,
     ) -> Self {
         Self {
             server,
             database,
             tracing,
             redis,
+            nats,
         }
     }
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct NatsConfig {
+    #[clap(long, default_value = "localhost:4222", env = "NATS_URL")]
+    pub nats_url: String,
+
+    #[clap(long, default_value = "nats", env = "NATS_USER")]
+    pub nats_user: String,
+
+    #[clap(long, default_value = "password", env = "NATS_PASSWORD")]
+    pub nats_password: String,
+}
+
+impl Default for NatsConfig {
+    fn default() -> Self {
+        Self {
+            nats_url: "localhost:4222".to_owned(),
+            nats_user: "nats".to_owned(),
+            nats_password: "password".to_owned(),
+        }
+    }
+}
+
+impl NatsConfig {
+  pub fn get_url(&self) -> String {
+    format!(
+      "nats://{nats_url}",
+      nats_url = self.nats_url,
+    )
+  }
 }

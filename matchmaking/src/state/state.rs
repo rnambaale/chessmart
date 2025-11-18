@@ -1,22 +1,24 @@
 use shared::error::BunnyChessApiError;
 
-use crate::{client::{database::{Database, PostgresDB}, redis::{RedisClient, RedisDB}}, config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TracingConfig}};
+use crate::{client::{database::{Database, PostgresDB}, nats::{NatsDB, NatsJetstreamContext}, redis::{RedisClient, RedisDB}}, config::{ApiConfig, DatabaseConfig, NatsConfig, RedisConfig, ServerConfig, TracingConfig}};
 
 pub struct AppState<DB: Database = PostgresDB> {
     pub db: DB,
     pub config: ApiConfig,
     pub redis: RedisClient,
+    pub jetstream: NatsJetstreamContext,
 }
 
 impl<DB> AppState<DB>
 where
     DB: Database,
 {
-    pub fn new(db: DB, config: ApiConfig, redis: RedisClient) -> Self {
+    pub fn new(db: DB, config: ApiConfig, redis: RedisClient, jetstream: NatsJetstreamContext) -> Self {
         Self {
             db,
             config,
             redis,
+            jetstream,
         }
     }
 }
@@ -26,7 +28,8 @@ pub struct AppStateBuilder {
     db_config: Option<DatabaseConfig>,
     server_config: Option<ServerConfig>,
     tracing_config: Option<TracingConfig>,
-    redis_config: Option<RedisConfig>
+    redis_config: Option<RedisConfig>,
+    nats_config: Option<NatsConfig>,
 }
 
 impl AppStateBuilder {
@@ -36,6 +39,7 @@ impl AppStateBuilder {
             server_config: None,
             tracing_config: None,
             redis_config: None,
+            nats_config: None,
         }
     }
 
@@ -46,6 +50,11 @@ impl AppStateBuilder {
 
     pub fn with_redis(mut self, redis_config: Option<RedisConfig>) -> Self {
         self.redis_config = redis_config;
+        self
+    }
+
+    pub fn with_nats(mut self, nats_config: Option<NatsConfig>) -> Self {
+        self.nats_config = nats_config;
         self
     }
 
@@ -67,6 +76,9 @@ impl AppStateBuilder {
         let redis_config = self.redis_config.expect("redis-config not set");
         let redis = RedisDB::new(&redis_config).await?;
 
+        let nats_config = self.nats_config.expect("nats-config not set");
+        let jetstream = NatsDB::new(&nats_config).await?;
+
         Ok(AppState::new(
             db,
             ApiConfig::new(
@@ -74,8 +86,10 @@ impl AppStateBuilder {
                 db_config,
                 self.tracing_config,
                 redis_config,
+                nats_config,
             ),
-            redis
+            redis,
+            jetstream,
         ))
     }
 }
