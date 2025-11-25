@@ -7,7 +7,7 @@ use socketioxide::SocketIo;
 
 use crate::server::state::AppState;
 
-pub async fn game_consumer(state: AppState, socket_io: Arc<SocketIo>) -> Result<(), async_nats::Error> {
+pub async fn game_consumer(state: Arc<AppState>, socket_io: Arc<SocketIo>) -> Result<(), async_nats::Error> {
     let jetstream = &state.jetstream;
 
     let stream_name = String::from("game-publisher");

@@ -38,12 +38,22 @@ pub async fn run_server(state: AppState) -> anyhow::Result<()> {
     //     s.on("matchmaking:leave-lobby", crate::routes::matchmaking::handle_leave_lobby);
     // });
 
-    let state_for_consumer = state.clone();
+    let state_for_consumer = Arc::new(state.clone());
     let socket_io = Arc::new(io);
 
     tokio::spawn(async move {
-        if let Err(e) = crate::listeners::game::game_consumer(state_for_consumer, socket_io).await {
-            eprintln!("Event consumer failed: {}", e);
+        if let Err(e) = crate::listeners::game::game_consumer(
+            state_for_consumer.clone(),
+            socket_io.clone()
+        ).await {
+            eprintln!("Game Event consumer failed: {}", e);
+        }
+
+        if let Err(e) = crate::listeners::matchmaking::matchmaking_consumer(
+            state_for_consumer.clone(),
+            socket_io.clone()
+        ).await {
+            eprintln!("Matchmaking Event consumer failed: {}", e);
         }
     });
 
