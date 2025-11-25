@@ -3,8 +3,9 @@ use tracing::{info, warn};
 
 use crate::{constants::ACCESS_TOKEN_DECODE_KEY, server::state::AppState, utils::claim::UserClaims};
 
-mod matchmaking;
+mod chat;
 mod game;
+mod matchmaking;
 
 pub async fn on_connect(socket: SocketRef) {
     println!("Socket connected: {}", socket.id);
@@ -19,6 +20,8 @@ pub async fn on_connect(socket: SocketRef) {
     socket.on("game:make-move", crate::handlers::game::handle_make_move);
     socket.on("game:resign", crate::handlers::game::handle_resign);
     socket.on("game:check-result", crate::handlers::game::handle_check_result);
+
+    socket.on("chat:send-message", crate::handlers::chat::handle_send_message);
 }
 
 /// Handles the connection of a new user.
