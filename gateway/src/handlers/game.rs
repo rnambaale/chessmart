@@ -36,17 +36,31 @@ pub async fn handle_make_move(
     ack.send(&()).ok();
 }
 
-// #[derive(Debug, Deserialize)]
-// pub struct ResignRequestDto {
-//     #[serde(rename = "gameId")]
-//     game_id: String,
-// }
+#[derive(Debug, Deserialize)]
+pub struct ResignRequestDto {
+    #[serde(rename = "gameId")]
+    game_id: String,
+}
 
-// pub async fn handle_resign(
-//     socket: SocketRef,
-//     Data(payload): Data<ResignRequestDto>,
-//     ack: AckSender,
-//     State(state): State<AppState>,
-// ) {
-//     println!("Resign request, game_id: {}", payload.game_id);
-// }
+pub async fn handle_resign(
+    socket: SocketRef,
+    Data(payload): Data<ResignRequestDto>,
+    ack: AckSender,
+    State(state): State<AppState>,
+) {
+    println!("Resign request, game_id: {}", payload.game_id);
+
+    let mut game_client = state.game_client.clone();
+
+    let account_id = socket.extensions.get::<UserClaims>()
+        .ok_or("Unauthorized")
+        .unwrap()
+        .uid;
+
+    game_client.resign(shared::ResignRequest{
+        account_id: account_id.to_string(),
+        game_id: payload.game_id,
+    }).await.expect("Failed to resign from game.");
+
+    ack.send(&()).ok();
+}
