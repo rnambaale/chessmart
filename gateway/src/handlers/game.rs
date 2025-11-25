@@ -64,3 +64,24 @@ pub async fn handle_resign(
 
     ack.send(&()).ok();
 }
+#[derive(Debug, Deserialize)]
+pub struct CheckResultRequestDto {
+    #[serde(rename = "gameId")]
+    game_id: String,
+}
+
+pub async fn handle_check_result(
+    Data(payload): Data<CheckResultRequestDto>,
+    ack: AckSender,
+    State(state): State<AppState>,
+) {
+    println!("Resign request, game_id: {}", payload.game_id);
+
+    let mut game_client = state.game_client;
+
+    game_client.check_game_result(shared::CheckGameResultRequest{
+        game_id: payload.game_id,
+    }).await.expect("Failed to check game result.");
+
+    ack.send(&()).ok();
+}

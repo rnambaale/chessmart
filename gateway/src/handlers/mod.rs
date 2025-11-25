@@ -18,6 +18,7 @@ pub async fn on_connect(socket: SocketRef) {
 
     socket.on("game:make-move", crate::handlers::game::handle_make_move);
     socket.on("game:resign", crate::handlers::game::handle_resign);
+    socket.on("game:check-result", crate::handlers::game::handle_check_result);
 }
 
 /// Handles the connection of a new user.
