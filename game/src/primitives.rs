@@ -335,27 +335,45 @@ impl ChessGame {
         todo!()
     }
 
-    // fn update_clock(&mut self) {
-    //     todo!()
-    // }
-
-    /*
-
-    private updateClock(): number {
-        const now = Date.now();
-        const turnColor = this._chess.turn();
-        this._gameClocks[turnColor] = Math.max(
-            0,
-            this._gameClocks[turnColor] -
-                (now - (this._gameClocks.lastMoveTimestamp ?? this._gameClocks.startTimestamp)),
-        );
-        return now;
-    }
-     */
-
-    pub fn check_game_result(&self) -> Result<Option<GameResult>, GameServiceError> {
+    fn update_clock(&mut self) {
         let turn_color = self.chess.turn();
-        // self.update_clock();
+        let now = Utc::now().timestamp() as u64;
+
+        let GameClocks {
+            last_move_timestamp,
+            start_timestamp,
+            b,
+            w,
+        } = self.game_clocks;
+
+        let start_time = match last_move_timestamp {
+            Some(tie) => tie as u64,
+            None => start_timestamp.timestamp() as u64
+        };
+
+        let mut b_updated = b;
+        let mut w_updated = w;
+
+        if turn_color == Color::Black {
+            b_updated = b - (now - start_time);
+        }
+
+        if turn_color == Color::White {
+            w_updated = w - (now - start_time);
+        }
+
+        let game_clocks = GameClocks {
+            w: w_updated,
+            b: b_updated,
+            last_move_timestamp,
+            start_timestamp,
+        };
+        self.game_clocks = game_clocks;
+    }
+
+    pub fn check_game_result(&mut self) -> Result<Option<GameResult>, GameServiceError> {
+        let turn_color = self.chess.turn();
+        self.update_clock();
 
         if self.chess.is_checkmate() {
             let winner_color = Self::get_other_color(turn_color);

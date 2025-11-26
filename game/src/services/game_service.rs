@@ -87,7 +87,7 @@ pub async fn get_game(
 
 pub async fn check_game_result(
     state: &AppState,
-    chess_game: &ChessGame,
+    chess_game: &mut ChessGame,
 ) -> Result<(), GameServiceError> {
     let game_result = chess_game.check_game_result()?;
     if game_result.is_none() {
@@ -151,12 +151,12 @@ pub async fn make_move(
     account_id: &str,
     game_move: &str,
 ) -> Result<ChessGame, GameServiceError> {
-    let chess_game = get_game(state, game_id).await?;
+    let mut chess_game = get_game(state, game_id).await?;
     let _ = chess_game.make_move(account_id, game_move)?;
 
     crate::repositories::game_repository::update_game(
         state,
-        &chess_game
+        &mut chess_game
     ).await?;
 
     crate::services::streaming_service::emit_game_state_update(
@@ -171,7 +171,7 @@ pub async fn make_move(
         }
     ).await?;
 
-    check_game_result(state, &chess_game).await?;
+    check_game_result(state, &mut chess_game).await?;
 
     debug!("Game {}: move '{}' by {}", game_id, game_move, account_id);
 

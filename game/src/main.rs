@@ -79,14 +79,14 @@ impl shared::GameService for GameGatewayService {
     ) -> Result<tonic::Response<shared::CheckGameResultResponse>, tonic::Status> {
         let shared::CheckGameResultRequest { game_id } = request.into_inner();
 
-        let chess_game = crate::services::game_service::get_game(
+        let mut chess_game = crate::services::game_service::get_game(
             &self.state,
             game_id.as_str()
         ).await?;
 
         crate::services::game_service::check_game_result(
             &self.state,
-            &chess_game
+            &mut chess_game
         ).await?;
 
         Ok(tonic::Response::new(shared::CheckGameResultResponse {}))
