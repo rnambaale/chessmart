@@ -241,6 +241,7 @@ dependencies = [
  "serde_json",
  "shared",
  "sqlx",
+ "thiserror 2.0.17",
  "tokio",
  "tonic 0.10.2",
  "tracing",

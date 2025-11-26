@@ -1,11 +1,8 @@
 use chrono::{DateTime, Utc};
-use shared::error::BunnyChessApiError;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::client::database::{self, PostgresDB};
-
-// use crate::database::{self, postgres::PostgresDB};
+use crate::{client::database::{self, PostgresDB}, error::AuthServiceError};
 
 pub struct Account {
     pub id: Uuid,
@@ -25,7 +22,7 @@ pub struct Account {
 pub async fn get_by_id(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     id: &Uuid
-) -> Result<Account, BunnyChessApiError> {
+) -> Result<Account, AuthServiceError> {
     match sqlx::query!(
         "SELECT id, username, email, password, is_admin, last_login_at, created_at, updated_at FROM users WHERE id = $1",
         id
@@ -50,7 +47,7 @@ pub async fn get_by_id(
 pub async fn insert_account(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     account: &Account,
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), AuthServiceError> {
     sqlx::query!(
         "INSERT INTO users (id, username, email, password) VALUES ($1, $2, $3, $4)",
         account.id,
@@ -68,7 +65,7 @@ pub async fn insert_account(
 pub async fn find_account_by_email(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     email: &str,
-) -> Result<Option<Account>, BunnyChessApiError> {
+) -> Result<Option<Account>, AuthServiceError> {
     match sqlx::query!(
         "SELECT id, username, email, password, is_admin, last_login_at, created_at, updated_at FROM users WHERE email = $1",
         email
@@ -94,7 +91,7 @@ pub async fn find_account_by_email(
 pub async fn find_account_by_username(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     username: &str
-) -> Result<Option<Account>, BunnyChessApiError> {
+) -> Result<Option<Account>, AuthServiceError> {
     let user = sqlx::query!(
         "SELECT id, username, email, password, is_admin, last_login_at, created_at, updated_at FROM users WHERE username = $1",
         username
@@ -118,7 +115,7 @@ pub async fn find_account_by_username(
 pub async fn update_last_login(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as database::Database>::DB>,
     account: &Account,
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), AuthServiceError> {
     sqlx::query!(
         "UPDATE users SET last_login_at = $1 WHERE id = $2",
         Utc::now(),

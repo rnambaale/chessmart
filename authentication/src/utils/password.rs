@@ -1,19 +1,20 @@
-use shared::error::BunnyChessApiError;
 use tracing::debug;
+
+use crate::error::AuthServiceError;
 
 use super::hash;
 
-pub async fn hash(password: String) -> Result<String, BunnyChessApiError> {
+pub async fn hash(password: String) -> Result<String, AuthServiceError> {
   let jh = tokio::task::spawn_blocking(move || hash::argon_hash(password));
   let password = jh.await??;
   Ok(password)
 }
 
-pub async fn verify(password: String, hashed_pass: String) -> Result<(), BunnyChessApiError> {
+pub async fn verify(password: String, hashed_pass: String) -> Result<(), AuthServiceError> {
   let jh = tokio::task::spawn_blocking(move || hash::argon_verify(password, hashed_pass));
   if let Err(e) = jh.await? {
     debug!("The password is not correct: {e}");
-    Err(BunnyChessApiError::InvalidInputError("The password is not correct".into()))
+    Err(AuthServiceError::InvalidInputError("The password is not correct".into()))
   } else {
     Ok(())
   }

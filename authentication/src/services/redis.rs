@@ -1,11 +1,10 @@
 use std::{fmt::{Debug, Display}, time::Duration};
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{client::redis::{RedisClient, RedisClientExt}, constants::EXPIRE_SESSION_CODE_SECS};
+use crate::{client::redis::{RedisClient, RedisClientExt}, constants::EXPIRE_SESSION_CODE_SECS, error::AuthServiceError};
 
 pub trait RedisKey: Debug + Display {
   type Value: Serialize + DeserializeOwned + Debug;
@@ -36,7 +35,7 @@ impl RedisKey for String  {
     const EXPIRE_TIME: Duration = EXPIRE_SESSION_CODE_SECS;
 }
 
-pub async fn set<K>(client: &RedisClient, (key, value): (&K, &K::Value)) -> Result<(), BunnyChessApiError>
+pub async fn set<K>(client: &RedisClient, (key, value): (&K, &K::Value)) -> Result<(), AuthServiceError>
 where
   K: RedisKey,
 {
@@ -60,7 +59,7 @@ where
 //   Ok(())
 // }
 
-pub async fn get<K>(client: &RedisClient, key: &K) -> Result<Option<K::Value>, BunnyChessApiError>
+pub async fn get<K>(client: &RedisClient, key: &K) -> Result<Option<K::Value>, AuthServiceError>
 where
   K: RedisKey,
 {

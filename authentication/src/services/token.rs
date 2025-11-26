@@ -1,14 +1,13 @@
 use chrono::{Duration, Utc};
-use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{client::database::Database, constants::{ACCESS_TOKEN_ENCODE_KEY, EXPIRE_BEARER_TOKEN_SECS, EXPIRE_REFRESH_TOKEN_SECS, REFRESH_TOKEN_DECODE_KEY, REFRESH_TOKEN_ENCODE_KEY}, dtos::{request::RefreshTokenRequestDto, response::LoginResponseDto}, state::state::AppState, utils::claim::UserClaims};
+use crate::{client::database::Database, constants::{ACCESS_TOKEN_ENCODE_KEY, EXPIRE_BEARER_TOKEN_SECS, EXPIRE_REFRESH_TOKEN_SECS, REFRESH_TOKEN_DECODE_KEY, REFRESH_TOKEN_ENCODE_KEY}, dtos::{request::RefreshTokenRequestDto, response::LoginResponseDto}, error::AuthServiceError, state::state::AppState, utils::claim::UserClaims};
 
 pub fn generate_tokens(
   user_id: Uuid,
   session_id: Uuid,
-) -> Result<LoginResponseDto, BunnyChessApiError> {
+) -> Result<LoginResponseDto, AuthServiceError> {
     let access_token = UserClaims::new(EXPIRE_BEARER_TOKEN_SECS, user_id, session_id)
         .encode(&ACCESS_TOKEN_ENCODE_KEY)?;
     let refresh_token = UserClaims::new(EXPIRE_REFRESH_TOKEN_SECS, user_id, session_id)
@@ -25,7 +24,7 @@ pub fn generate_tokens(
     ))
 }
 
-pub async fn refresh(state: &AppState, req: &RefreshTokenRequestDto) -> Result<LoginResponseDto, BunnyChessApiError> {
+pub async fn refresh(state: &AppState, req: &RefreshTokenRequestDto) -> Result<LoginResponseDto, AuthServiceError> {
     let user_claims = UserClaims::decode(&req.token, &REFRESH_TOKEN_DECODE_KEY)?.claims;
 
     info!("Refresh token: {user_claims:?}");

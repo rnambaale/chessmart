@@ -17,39 +17,12 @@ pub enum BunnyChessApiError {
     #[error("{0}")]
     GameNotFoundError(String),
 
-    // #[error("Session not found error {0}")]
-    // SessionNotFoundError(String),
 
     #[error("Invalid quote uuid {0}")]
     InvalidUuid(#[from] uuid::Error),
 
     #[error("{0}")]
     InvalidInputError(String),
-
-    #[error("{0}")]
-    HashError(String),
-
-    #[error("Task execution error: {0}")]
-    SpawnTaskError(#[from] tokio::task::JoinError),
-
-    // Auth errors
-    #[error("{0}")]
-    EmailNotFoundError(String),
-
-    #[error("User already exists")]
-    UserAlreadyExists,
-
-    #[error(transparent)]
-    ParseJsonError(#[from] serde_json::Error),
-
-    #[error("Session not found error {0}")]
-    SessionNotFoundError(String),
-
-    #[error("{0}")]
-    InvalidSessionError(String),
-
-    #[error(transparent)]
-    JwtError(#[from] jsonwebtoken::errors::Error),
 
     #[error("{0}")]
     GrpcError(String),
@@ -68,8 +41,3 @@ impl From<tonic::transport::Error> for BunnyChessApiError {
     }
 }
 
-impl From<argon2::password_hash::Error> for BunnyChessApiError {
-  fn from(value: argon2::password_hash::Error) -> Self {
-    BunnyChessApiError::HashError(value.to_string())
-  }
-}

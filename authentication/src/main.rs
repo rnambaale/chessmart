@@ -1,9 +1,9 @@
-use shared::{AccountServiceServer, error::BunnyChessApiError, primitives::TimestampExt};
+use shared::{AccountServiceServer, primitives::TimestampExt};
 use tonic::transport::Server;
 use prost_types::Timestamp;
 use tracing::{info, warn};
 
-use crate::{config::ApiConfig, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, state::state::{AppState, AppStateBuilder}};
+use crate::{config::ApiConfig, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::LoginResponseDto}, error::AuthServiceError, repositories::user::Account, state::state::{AppState, AppStateBuilder}};
 
 pub mod services;
 pub mod repositories;
@@ -13,6 +13,7 @@ mod state;
 pub mod utils;
 pub mod constants;
 pub mod dtos;
+mod error;
 
 pub struct AccountGatewayService {
     state: AppState
@@ -134,7 +135,7 @@ impl shared::AccountService for AccountGatewayService {
 
         if keys.into_iter().filter(|key| key.is_some()).count() != 1 {
             return Err(
-                BunnyChessApiError::InvalidInputError("Exactly one between 'id' and 'email' must be set".to_string()).into()
+                AuthServiceError::InvalidInputError("Exactly one between 'id' and 'email' must be set".to_string()).into()
             );
         }
 

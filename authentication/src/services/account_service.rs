@@ -1,16 +1,15 @@
 use std::str::FromStr;
 
 use chrono::Utc;
-use shared::error::BunnyChessApiError;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{client::database::{Database, PostgresDB}, repositories::user::Account, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, services::redis::SessionKey, state::state::AppState};
+use crate::{client::database::{Database, PostgresDB}, dtos::{request::{FindAccountRequestDto, LoginRequestDto, RegisterRequestDto}, response::LoginResponseDto}, error::AuthServiceError, repositories::user::Account, services::redis::SessionKey, state::state::AppState};
 
 pub async fn register(
     state: &AppState,
     request: &RegisterRequestDto
-) -> Result<Account, BunnyChessApiError> {
+) -> Result<Account, AuthServiceError> {
     let mut tx = state.db.begin_tx().await?;
 
     check_unique_username(&mut tx, &request.username).await?;
@@ -37,7 +36,7 @@ pub async fn register(
 async fn check_unique_username(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as Database>::DB>,
     username: &str,
-) -> Result<bool, BunnyChessApiError> {
+) -> Result<bool, AuthServiceError> {
     let username_option = crate::repositories::user::find_account_by_username(tx, username).await?;
 
     let username_exists = match username_option {
@@ -46,7 +45,7 @@ async fn check_unique_username(
     };
 
     if username_exists {
-        return Err(BunnyChessApiError::UserAlreadyExists);
+        return Err(AuthServiceError::UserAlreadyExists);
     }
 
     Ok(true)
@@ -55,17 +54,17 @@ async fn check_unique_username(
 pub async fn check_unique_email(
     tx: &mut sqlx::Transaction<'_, <PostgresDB as Database>::DB>,
     email: &str,
-) -> Result<bool, BunnyChessApiError> {
+) -> Result<bool, AuthServiceError> {
     let email_result = crate::repositories::user::find_account_by_email(tx, email).await;
 
     let email_exists = match email_result {
         Ok(_) => true,
-        Err(BunnyChessApiError::Db(sqlx::Error::RowNotFound)) => false,
+        Err(AuthServiceError::Db(sqlx::Error::RowNotFound)) => false,
         Err(e) => return Err(e),
     };
 
     if email_exists {
-        return Err(BunnyChessApiError::UserAlreadyExists);
+        return Err(AuthServiceError::UserAlreadyExists);
     }
 
     Ok(true)
@@ -74,12 +73,12 @@ pub async fn check_unique_email(
 pub async fn login(
     state: &AppState,
     request: &LoginRequestDto
-) -> Result<LoginResponseDto, BunnyChessApiError> {
+) -> Result<LoginResponseDto, AuthServiceError> {
     let mut tx = state.db.begin_tx().await?;
     let account = crate::repositories::user::find_account_by_email(&mut tx, &request.email).await?;
 
     if account.is_none() {
-        return Err(BunnyChessApiError::EmailNotFoundError("Email not found.".into()));
+        return Err(AuthServiceError::EmailNotFoundError("Email not found.".into()));
     }
 
     let account = account.unwrap();
@@ -98,7 +97,7 @@ pub async fn login(
 pub async fn find_account(
     state: &AppState,
     request: &FindAccountRequestDto
-) -> Result<Account, BunnyChessApiError> {
+) -> Result<Account, AuthServiceError> {
     let FindAccountRequestDto { id, email} = request;
 
     if let Some(id) = id {
@@ -119,7 +118,7 @@ pub async fn find_account(
         let account = match account_option {
             Some(account ) => account,
             None => {
-                return Err(BunnyChessApiError::EmailNotFoundError("User with email not found".into()));
+                return Err(AuthServiceError::EmailNotFoundError("User with email not found".into()));
             }
         };
 
@@ -127,11 +126,11 @@ pub async fn find_account(
     }
 
     Err(
-        BunnyChessApiError::InvalidInputError("Either 'id' and 'email' must be set".to_string())
+        AuthServiceError::InvalidInputError("Either 'id' and 'email' must be set".to_string())
     )
 }
 
-pub async fn logout(state: &AppState, user_id: Uuid) -> Result<(), BunnyChessApiError> {
+pub async fn logout(state: &AppState, user_id: Uuid) -> Result<(), AuthServiceError> {
     info!("Logout user id: {user_id}");
     let key = SessionKey { user_id };
     crate::services::redis::del(&state.redis, &key).await?;
