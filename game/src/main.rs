@@ -15,7 +15,6 @@ mod state;
 mod utils;
 pub struct GameGatewayService {
     state: AppState,
-    // game_service: GameService,
 }
 
 impl GameGatewayService {

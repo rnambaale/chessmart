@@ -39,7 +39,7 @@ pub async fn find_game(
     match game_repr {
         Some(repr) => {
             // let game = ChessGame::from_string(&repr)
-            //     .map_err(|e| BunnyChessApiError::ParseJsonError(e.to_string()))?;
+            //     .map_err(|e| GameServiceError::ParseJsonError(e.to_string()))?;
             let game = ChessGame::from_string(&repr)?;
 
             Ok(Some(game))

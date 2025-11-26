@@ -173,20 +173,6 @@ pub struct GameResult {
     pub reason: GameOverReason,
 }
 
-/*
-export interface GameResult {
-  outcome: 'w' | 'b' | 'draw';
-  winnerAccountId?: string;
-  reason: GameOverReason;
-}
-*/
-
-// pub struct GameResult {
-//     pub outcome:
-// }
-
-// pub struct
-
 impl ChessGame {
     pub fn new(
         id: String,
