@@ -4,6 +4,8 @@ use shakmaty::{Chess, Color, Move, Position, san::San};
 use shared::{error::BunnyChessApiError, primitives::GameType};
 use std::str::FromStr;
 
+use crate::error::GameServiceError;
+
 const MAX_MOVES: u64 = 300;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -292,7 +294,7 @@ impl ChessGame {
         self.to_json().unwrap_or_else(|_| "{}".to_string())
     }
 
-    pub fn from_string(game_repr: &str) -> Result<Self, BunnyChessApiError> {
+    pub fn from_string(game_repr: &str) -> Result<Self, GameServiceError> {
         let json_repr = serde_json::from_str::<JsonRepr>(game_repr)?;
         let JsonRepr {
             id ,
@@ -304,7 +306,7 @@ impl ChessGame {
             resigned_color, ..} = json_repr;
         Ok(Self {
             id,
-            game_type: GameType::from_str(&game_type)?,
+            game_type: GameType::from_str(&game_type).map_err(|e: BunnyChessApiError| GameServiceError::UnknownGameTypeError(e.to_string()) )?,
             account_ids,
             chess: Chess::new(),
             metadata,
@@ -351,7 +353,7 @@ impl ChessGame {
     }
      */
 
-    pub fn check_game_result(&self) -> Result<Option<GameResult>, BunnyChessApiError> {
+    pub fn check_game_result(&self) -> Result<Option<GameResult>, GameServiceError> {
         let turn_color = self.chess.turn();
         // self.update_clock();
 
@@ -491,11 +493,11 @@ impl ChessGame {
         }
     }
 
-    pub fn make_move(&self, account_id: &str, game_move: &str) -> Result<(Chess, Move), BunnyChessApiError> {
+    pub fn make_move(&self, account_id: &str, game_move: &str) -> Result<(Chess, Move), GameServiceError> {
         let turn = self.chess.turn();
 
         if self.is_game_over() {
-            return Err(BunnyChessApiError::GameOverError("Game is already over".into()));
+            return Err(GameServiceError::GameOverError);
         }
 
         let AccountIds { b, w } = self.account_ids.clone();
@@ -506,16 +508,16 @@ impl ChessGame {
         };
 
         if account_id != turn_account {
-            return Err(BunnyChessApiError::TurnError("Wrong turn".into()));
+            return Err(GameServiceError::TurnError("Wrong turn".into()));
         }
 
         let san: San = game_move.parse()
-            .map_err(|e: shakmaty::san::ParseSanError| BunnyChessApiError::UnexpectedError(e.to_string()))?;
+            .map_err(|e: shakmaty::san::ParseSanError| GameServiceError::UnexpectedError(e.to_string()))?;
         let game_move = san.to_move(&self.chess)
-            .map_err(|e| BunnyChessApiError::UnexpectedError(e.to_string()))?;
+            .map_err(|e| GameServiceError::UnexpectedError(e.to_string()))?;
 
         let new_position = self.chess.clone().play(&game_move)
-            .map_err(|e| BunnyChessApiError::UnexpectedError(e.to_string()))?;
+            .map_err(|e| GameServiceError::UnexpectedError(e.to_string()))?;
         Ok((new_position, game_move))
     }
 

@@ -1,14 +1,13 @@
 use redis::AsyncCommands;
-use shared::error::BunnyChessApiError;
 
-use crate::{primitives::ChessGame, state::state::AppState};
+use crate::{error::GameServiceError, primitives::ChessGame, state::state::AppState};
 
 const UPDATE_GAME_SCRIPT: &str = include_str!("lua-scripts/update-game.lua");
 
 pub async fn store_game(
     state: &AppState,
     chess_game: &ChessGame
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), GameServiceError> {
     let game_key = get_game_key(chess_game.id.as_str());
     let mut connection = state.redis.get_multiplexed_async_connection().await?;
 
@@ -30,7 +29,7 @@ fn get_game_key(game_id: &str) -> String {
 pub async fn find_game(
     state: &AppState,
     game_id: &str
-) -> Result<Option<ChessGame>, BunnyChessApiError> {
+) -> Result<Option<ChessGame>, GameServiceError> {
     let game_key = get_game_key(game_id);
 
     let mut connection = state.redis.get_multiplexed_async_connection().await?;
@@ -52,7 +51,7 @@ pub async fn find_game(
 pub async fn delete_game(
     state: &AppState,
     game_id: &str
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), GameServiceError> {
     let game_key = get_game_key(game_id);
 
     let mut connection = state.redis.get_multiplexed_async_connection().await?;
@@ -65,7 +64,7 @@ pub async fn delete_game(
 pub async fn update_game(
     state: &AppState,
     chess_game: &ChessGame
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), GameServiceError> {
     let game_key = get_game_key(chess_game.id.as_str());
 
     let mut connection = state.redis.get_multiplexed_async_connection().await?;
@@ -79,14 +78,14 @@ pub async fn update_game(
         .arg(chess_game.seq())
         .invoke_async(&mut connection)
         .await
-        .map_err(|e| BunnyChessApiError::RedisError(e))?;
+        .map_err(|e| GameServiceError::RedisError(e))?;
 
     match result {
         1 => Ok(()),
-        0 => Err(BunnyChessApiError::ConcurrentMoveError(
+        0 => Err(GameServiceError::ConcurrentMoveError(
             format!("Trying to update game {} with same seq number", chess_game.id)
         )),
-        _ => Err(BunnyChessApiError::UnexpectedError(
+        _ => Err(GameServiceError::UnexpectedError(
             "Unexpected return value from Lua script".to_string()
         )),
     }

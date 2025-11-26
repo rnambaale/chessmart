@@ -1,13 +1,13 @@
 use rand::{seq::SliceRandom, thread_rng};
-use shared::{error::BunnyChessApiError, events::{GameOverEvent, GameStartEvent, GameStateUpdateEvent}};
+use shared::{events::{GameOverEvent, GameStartEvent, GameStateUpdateEvent}};
 use tracing::debug;
 
-use crate::{jobs::{TaskMessage, TaskType, check_game_job::CheckGamePayload}, primitives::{AccountIds, ChessGame, CreateGameDto}, state::state::AppState};
+use crate::{error::GameServiceError, jobs::{TaskMessage, TaskType, check_game_job::CheckGamePayload}, primitives::{AccountIds, ChessGame, CreateGameDto}, state::state::AppState};
 
 pub async fn create_game(
     state: &AppState,
     payload: CreateGameDto,
-) -> Result<ChessGame, BunnyChessApiError> {
+) -> Result<ChessGame, GameServiceError> {
     let CreateGameDto {
         account_id0,
         account_id1,
@@ -55,7 +55,7 @@ pub async fn create_game(
     Ok(chess_game)
 }
 
-async fn add_game_to_check_queue(state: &AppState, chess_game: &ChessGame) -> Result<(), BunnyChessApiError> {
+async fn add_game_to_check_queue(state: &AppState, chess_game: &ChessGame) -> Result<(), GameServiceError> {
   let ChessGame { id, ..} = chess_game;
   let body = CheckGamePayload { game_id: id.to_string() };
   let message_type = TaskType::CheckGameJob(body);
@@ -73,7 +73,7 @@ async fn add_game_to_check_queue(state: &AppState, chess_game: &ChessGame) -> Re
 pub async fn get_game(
     state: &AppState,
     game_id: &str,
-) -> Result<ChessGame, BunnyChessApiError> {
+) -> Result<ChessGame, GameServiceError> {
     let game_option = crate::repositories::game_repository::find_game(
         state,
         game_id
@@ -81,14 +81,14 @@ pub async fn get_game(
 
     match game_option {
         Some(game) => Ok(game),
-        None => Err(BunnyChessApiError::GameNotFoundError(format!("Couldn't find game {}", game_id)))
+        None => Err(GameServiceError::GameNotFoundError(format!("Couldn't find game {}", game_id)))
     }
 }
 
 pub async fn check_game_result(
     state: &AppState,
     chess_game: &ChessGame,
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), GameServiceError> {
     let game_result = chess_game.check_game_result()?;
     if game_result.is_none() {
         return Ok(());
@@ -130,7 +130,7 @@ pub async fn check_game_result(
     Ok(())
 }
 
-async fn remove_game_from_check_queue(state: &AppState, chess_game: &ChessGame) -> Result<(), BunnyChessApiError> {
+async fn remove_game_from_check_queue(state: &AppState, chess_game: &ChessGame) -> Result<(), GameServiceError> {
   let ChessGame { id, ..} = chess_game;
   let body = CheckGamePayload { game_id: id.to_string() };
   let message_type = TaskType::CheckGameJob(body);
@@ -150,7 +150,7 @@ pub async fn make_move(
     game_id: &str,
     account_id: &str,
     game_move: &str,
-) -> Result<ChessGame, BunnyChessApiError> {
+) -> Result<ChessGame, GameServiceError> {
     let chess_game = get_game(state, game_id).await?;
     let _ = chess_game.make_move(account_id, game_move)?;
 

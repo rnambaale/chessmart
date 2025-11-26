@@ -53,18 +53,6 @@ pub enum BunnyChessApiError {
 
     #[error("{0}")]
     GrpcError(String),
-
-    #[error("{0}")]
-    ConcurrentMoveError(String),
-
-    #[error("{0}")]
-    GameOverError(String),
-
-    #[error("{0}")]
-    TurnError(String),
-
-    #[error("{0}")]
-    UnexpectedError(String),
 }
 
 impl From<BunnyChessApiError> for tonic::Status {

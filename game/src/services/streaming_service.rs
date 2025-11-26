@@ -1,8 +1,8 @@
-use shared::{error::BunnyChessApiError, events::{GameEvent, GameOverEvent, GameStartEvent, GameStateUpdateEvent}};
+use shared::{events::{GameEvent, GameOverEvent, GameStartEvent, GameStateUpdateEvent}};
 
-use crate::state::state::AppState;
+use crate::{error::GameServiceError, state::state::AppState};
 
-pub async fn emit_game_start(state: &AppState, payload: GameStartEvent) -> Result<(), BunnyChessApiError> {
+pub async fn emit_game_start(state: &AppState, payload: GameStartEvent) -> Result<(), GameServiceError> {
     let event = GameEvent::GameStart(payload.clone());
     let subject = event.subject();
 
@@ -17,11 +17,10 @@ pub async fn emit_game_start(state: &AppState, payload: GameStartEvent) -> Resul
     Ok(())
 }
 
-#[allow(dead_code)]
 pub async fn emit_game_state_update(
     state: &AppState,
     payload: GameStateUpdateEvent
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), GameServiceError> {
     let event = GameEvent::GameStateUpdate(payload.clone());
     let subject = event.subject();
 
@@ -36,11 +35,10 @@ pub async fn emit_game_state_update(
     Ok(())
 }
 
-#[allow(dead_code)]
 pub async fn emit_game_over_event(
     state: &AppState,
     payload: GameOverEvent
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), GameServiceError> {
     let event = GameEvent::GameOver(payload.clone());
     let subject = event.subject();
 

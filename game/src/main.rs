@@ -6,6 +6,7 @@ use crate::{config::ApiConfig, primitives::CreateGameDto, state::{AppServer, sta
 
 mod client;
 mod config;
+mod error;
 mod jobs;
 mod primitives;
 mod repositories;

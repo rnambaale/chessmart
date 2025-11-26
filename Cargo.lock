@@ -1325,6 +1325,7 @@ dependencies = [
  "shakmaty",
  "shared",
  "sqlx",
+ "thiserror 2.0.17",
  "tokio",
  "tonic 0.10.2",
  "tower 0.4.13",
