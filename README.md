@@ -12,4 +12,9 @@ Start all services by running
 
 ```sh
 docker compose up -d
+
+cargo run -p authentication
+cargo run -p matchmaking
+cargo run -p game
+cargo run -p gateway
 ```
