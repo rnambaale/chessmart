@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{constants::EXPIRE_SESSION_CODE_SECS, error::BunnyChessApiError, client::redis::{RedisClient, RedisClientExt}};
+use crate::{constants::EXPIRE_SESSION_CODE_SECS, error::GatewayServiceError, client::redis::{RedisClient, RedisClientExt}};
 
 pub trait RedisKey: Debug + Display {
   type Value: Serialize + DeserializeOwned + Debug;
@@ -35,7 +35,7 @@ impl RedisKey for String  {
     const EXPIRE_TIME: Duration = EXPIRE_SESSION_CODE_SECS;
 }
 
-pub async fn set<K>(client: &RedisClient, (key, value): (&K, &K::Value)) -> Result<(), BunnyChessApiError>
+pub async fn set<K>(client: &RedisClient, (key, value): (&K, &K::Value)) -> Result<(), GatewayServiceError>
 where
   K: RedisKey,
 {
@@ -45,7 +45,7 @@ where
   Ok(())
 }
 
-// pub async fn hset<K>(client: &RedisClient, key: &K, value: &PlayerStatusUpdate) -> Result<(), BunnyChessApiError>
+// pub async fn hset<K>(client: &RedisClient, key: &K, value: &PlayerStatusUpdate) -> Result<(), GatewayServiceError>
 // where
 //   K: RedisKey,
 // {
@@ -59,7 +59,7 @@ where
 //   Ok(())
 // }
 
-pub async fn get<K>(client: &RedisClient, key: &K) -> Result<Option<K::Value>, BunnyChessApiError>
+pub async fn get<K>(client: &RedisClient, key: &K) -> Result<Option<K::Value>, GatewayServiceError>
 where
   K: RedisKey,
 {
@@ -73,7 +73,7 @@ where
   )
 }
 
-// pub async fn hgetall<K>(client: &RedisClient, key: &K) -> Result<Option<HashMap<String, String>>, BunnyChessApiError>
+// pub async fn hgetall<K>(client: &RedisClient, key: &K) -> Result<Option<HashMap<String, String>>, GatewayServiceError>
 // where
 //   K: RedisKey,
 // {

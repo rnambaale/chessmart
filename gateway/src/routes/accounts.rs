@@ -3,7 +3,7 @@ use prost_types::Timestamp;
 use shared::{GetAccountRankingResponse, primitives::TimestampExt};
 use tracing::info;
 
-use crate::{dtos::response::{AccountResponseDto, MeResponseDto}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, utils::claim::UserClaims};
+use crate::{dtos::response::{AccountResponseDto, MeResponseDto}, error::{AppResponseError, GatewayServiceError}, server::state::AppState, utils::claim::UserClaims};
 
 #[utoipa::path(
     get,
@@ -18,7 +18,7 @@ use crate::{dtos::response::{AccountResponseDto, MeResponseDto}, error::{AppResp
 pub async fn me(
   State(state): State<AppState>,
   user: UserClaims,
-) -> Result<Json<MeResponseDto>, BunnyChessApiError> {
+) -> Result<Json<MeResponseDto>, GatewayServiceError> {
     info!("Get profile user id: {}.", user.uid);
 
     let shared::Account {
@@ -98,7 +98,7 @@ pub async fn get_account(
     State(state): State<AppState>,
     axum::extract::Path(account_id): axum::extract::Path<String>,
     _user: UserClaims,
-) -> Result<Json<AccountResponseDto>, BunnyChessApiError> {
+) -> Result<Json<AccountResponseDto>, GatewayServiceError> {
     info!("Get profile user id: {}.", account_id);
 
     let shared::Account {

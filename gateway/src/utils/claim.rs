@@ -10,7 +10,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use async_trait::async_trait;
 
-use crate::{constants::ACCESS_TOKEN_DECODE_KEY, error::BunnyChessApiError, server::state::AppState};
+use crate::{constants::ACCESS_TOKEN_DECODE_KEY, error::GatewayServiceError, server::state::AppState};
 
 pub static DECODE_HEADER: LazyLock<Validation> =
   LazyLock::new(|| Validation::new(Algorithm::RS256));
@@ -54,7 +54,7 @@ impl UserClaims {
 #[async_trait]
 impl FromRequestParts<AppState> for UserClaims
 {
-  type Rejection = BunnyChessApiError;
+  type Rejection = GatewayServiceError;
 
   async fn from_request_parts(
     parts: &mut Parts,
@@ -67,11 +67,11 @@ impl FromRequestParts<AppState> for UserClaims
 
     let auth_header = parts.headers
         .get("Authorization")
-        .ok_or_else(|| BunnyChessApiError::UnauthorizedError("Missing Authorization header".to_string()))?
+        .ok_or_else(|| GatewayServiceError::UnauthorizedError("Missing Authorization header".to_string()))?
         .to_str()
-        .map_err(|_| BunnyChessApiError::UnauthorizedError("Invalid Authorization header".to_string()))?;
+        .map_err(|_| GatewayServiceError::UnauthorizedError("Invalid Authorization header".to_string()))?;
     if !auth_header.starts_with("Bearer ") {
-        return Err(BunnyChessApiError::UnauthorizedError("Invalid Authorization format".to_string()));
+        return Err(GatewayServiceError::UnauthorizedError("Invalid Authorization format".to_string()));
     }
 
     let token = auth_header.trim_start_matches("Bearer ").trim();
@@ -83,24 +83,24 @@ impl FromRequestParts<AppState> for UserClaims
 }
 
 pub trait UserClaimsRequest {
-  fn get_user_id(&self) -> Result<Uuid, BunnyChessApiError>;
-  fn get_user_claims(&self) -> Result<UserClaims, BunnyChessApiError>;
+  fn get_user_id(&self) -> Result<Uuid, GatewayServiceError>;
+  fn get_user_claims(&self) -> Result<UserClaims, GatewayServiceError>;
 }
 
 impl UserClaimsRequest for axum::extract::Request {
-  fn get_user_id(&self) -> Result<Uuid, BunnyChessApiError> {
+  fn get_user_id(&self) -> Result<Uuid, GatewayServiceError> {
     self
       .extensions()
       .get::<UserClaims>()
       .map(|u| u.uid)
-      .ok_or_else(|| BunnyChessApiError::UnauthorizedError("User Must Login".to_string()))
+      .ok_or_else(|| GatewayServiceError::UnauthorizedError("User Must Login".to_string()))
   }
 
-  fn get_user_claims(&self) -> Result<UserClaims, BunnyChessApiError> {
+  fn get_user_claims(&self) -> Result<UserClaims, GatewayServiceError> {
     self
       .extensions()
       .get::<UserClaims>()
       .cloned()
-      .ok_or_else(|| BunnyChessApiError::UnauthorizedError("User Must Login".to_string()))
+      .ok_or_else(|| GatewayServiceError::UnauthorizedError("User Must Login".to_string()))
   }
 }

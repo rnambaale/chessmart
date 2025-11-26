@@ -5,7 +5,7 @@ use prost_types::Timestamp;
 use shared::primitives::TimestampExt;
 use tracing::{info, instrument};
 
-use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, error::{AppResponseError, BunnyChessApiError}, server::state::AppState, utils::claim::UserClaims};
+use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRequestDto}, response::{LoginResponseDto, MessageResponseDto, RegisterResponseDto}}, error::{AppResponseError, GatewayServiceError}, server::state::AppState, utils::claim::UserClaims};
 
 #[utoipa::path(
     post,
@@ -21,7 +21,7 @@ use crate::{dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterRe
 pub async fn post_register(
     State(state): State<AppState>,
     Json(request): Json<RegisterRequestDto>,
-) -> Result<Json<RegisterResponseDto>, BunnyChessApiError> {
+) -> Result<Json<RegisterResponseDto>, GatewayServiceError> {
     let RegisterRequestDto {
         email,
         username,
@@ -65,7 +65,7 @@ pub async fn post_register(
 pub async fn login(
   State(state): State<AppState>,
   Json(request): Json<LoginRequestDto>,
-) -> Result<Json<LoginResponseDto>, BunnyChessApiError> {
+) -> Result<Json<LoginResponseDto>, GatewayServiceError> {
     info!("Login user with request: {request:?}.");
 
     let LoginRequestDto { email, password} = request;
@@ -115,7 +115,7 @@ pub async fn login(
 pub async fn refresh(
   State(state): State<AppState>,
   Json(request): Json<RefreshTokenRequestDto>,
-) -> Result<Json<LoginResponseDto>, BunnyChessApiError> {
+) -> Result<Json<LoginResponseDto>, GatewayServiceError> {
     info!("Refresh token with request: {request:?}.");
 
     let RefreshTokenRequestDto { token } = request;
@@ -167,7 +167,7 @@ pub async fn refresh(
 pub async fn logout(
   State(_state): State<AppState>,
   user: UserClaims,
-) -> Result<Json<MessageResponseDto>, BunnyChessApiError> {
+) -> Result<Json<MessageResponseDto>, GatewayServiceError> {
   info!("Logout user_id: {}", user.uid);
   todo!()
 //   match services::authentication::logout(&state, user.uid).await {

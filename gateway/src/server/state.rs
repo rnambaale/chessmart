@@ -1,7 +1,7 @@
 use shared::generated::{account_service::account_service_client::AccountServiceClient, game_service::game_service_client::GameServiceClient, matchmaker_service::matchmaker_service_client::MatchmakerServiceClient, ranking_service::ranking_service_client::RankingServiceClient};
 use tonic::transport::Channel;
 
-use crate::{client::nats::{NatsDB, NatsJetstreamContext}, config::{ApiConfig, NatsConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, error::BunnyChessApiError, client::redis::{RedisClient, RedisDB}};
+use crate::{client::nats::{NatsDB, NatsJetstreamContext}, config::{ApiConfig, NatsConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}, error::GatewayServiceError, client::redis::{RedisClient, RedisDB}};
 
 type AccountGrpcClient = AccountServiceClient<Channel>;
 pub type MatchmakingGrpcClient = MatchmakerServiceClient<Channel>;
@@ -86,7 +86,7 @@ impl AppStateBuilder {
         self
     }
 
-    pub async fn build(self) -> Result<AppState, BunnyChessApiError> {
+    pub async fn build(self) -> Result<AppState, GatewayServiceError> {
         let redis_config = self.redis_config.expect("redis-config not set");
         let redis = RedisDB::new(&redis_config).await?;
 

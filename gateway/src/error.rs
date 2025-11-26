@@ -10,24 +10,12 @@ use thiserror::Error;
 use tracing::{event, Level};
 
 #[derive(Error, Debug)]
-pub enum BunnyChessApiError {
-    #[error("DB Error {0}")]
-    Db(#[from] sqlx::Error),
-
+pub enum GatewayServiceError {
     #[error(transparent)]
     RedisError(#[from] redis::RedisError),
 
     #[error(transparent)]
     NatsError(#[from] async_nats::Error),
-
-    #[error("{0}")]
-    HashError(String),
-
-    #[error("Invalid quote uuid {0}")]
-    InvalidUuid(#[from] uuid::Error),
-
-    #[error("User already exists")]
-    UserAlreadyExists,
 
     #[error("Task execution error: {0}")]
     SpawnTaskError(#[from] tokio::task::JoinError),
@@ -37,9 +25,6 @@ pub enum BunnyChessApiError {
 
     #[error(transparent)]
     JwtError(#[from] jsonwebtoken::errors::Error),
-
-    #[error("{0}")]
-    InvalidInputError(String),
 
     #[error("{0}")]
     InvalidSessionError(String),
@@ -54,7 +39,7 @@ pub enum BunnyChessApiError {
     GrpcError(String),
 }
 
-impl IntoResponse for BunnyChessApiError {
+impl IntoResponse for GatewayServiceError {
     fn into_response(self) -> Response {
         event!(Level::ERROR, "error in API server: {:?}", self);
 
@@ -67,25 +52,13 @@ impl IntoResponse for BunnyChessApiError {
     }
 }
 
-impl From<argon2::password_hash::Error> for BunnyChessApiError {
-  fn from(value: argon2::password_hash::Error) -> Self {
-    BunnyChessApiError::HashError(value.to_string())
-  }
-}
-
-impl BunnyChessApiError {
+impl GatewayServiceError {
   pub fn response(self) -> (StatusCode, AppResponseError) {
-    use BunnyChessApiError::*;
+    use GatewayServiceError::*;
     let message = self.to_string();
 
 
     let (kind, code, details, status_code) = match self {
-      Db(_err) => (
-        "DB_ERROR".to_string(),
-        None,
-        vec![],
-        StatusCode::INTERNAL_SERVER_ERROR,
-      ),
       RedisError(_err) => (
         "REDIS_ERROR".to_string(),
         None,
@@ -98,32 +71,8 @@ impl BunnyChessApiError {
         vec![],
         StatusCode::INTERNAL_SERVER_ERROR,
       ),
-      UserAlreadyExists => (
-        format!("USER_ALREADY_EXISTS_ERROR"),
-        None,
-        vec![],
-        StatusCode::CONFLICT,
-      ),
-      InvalidInputError(_err) => (
-        "INVALID_INPUT_ERROR".to_string(),
-        None,
-        vec![],
-        StatusCode::BAD_REQUEST,
-      ),
       SpawnTaskError(_err) => (
         "SPAWN_TASK_ERROR".to_string(),
-        None,
-        vec![],
-        StatusCode::INTERNAL_SERVER_ERROR,
-      ),
-      InvalidUuid(_err) => (
-        "UUID_ERROR".to_string(),
-        None,
-        vec![],
-        StatusCode::INTERNAL_SERVER_ERROR,
-      ),
-      HashError(_err) => (
-        "HASH_ERROR".to_string(),
         None,
         vec![],
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -197,16 +146,16 @@ impl AppResponseError {
   }
 }
 
-impl From<tonic::Status> for BunnyChessApiError {
+impl From<tonic::Status> for GatewayServiceError {
     fn from(status: tonic::Status) -> Self {
         eprintln!("gRPC error: {}", status);
-        BunnyChessApiError::GrpcError(status.message().to_string())
+        GatewayServiceError::GrpcError(status.message().to_string())
     }
 }
 
-impl From<tonic::transport::Error> for BunnyChessApiError {
+impl From<tonic::transport::Error> for GatewayServiceError {
     fn from(error: tonic::transport::Error) -> Self {
         eprintln!("gRPC error: {}", error);
-        BunnyChessApiError::GrpcError(error.to_string())
+        GatewayServiceError::GrpcError(error.to_string())
     }
 }
