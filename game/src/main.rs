@@ -112,9 +112,19 @@ impl shared::GameService for GameGatewayService {
 
     async fn resign(
         &self,
-        _request: tonic::Request<shared::ResignRequest>,
+        request: tonic::Request<shared::ResignRequest>,
     ) -> Result<tonic::Response<shared::ResignResponse>, tonic::Status> {
-        todo!()
+        let shared::ResignRequest { game_id, account_id } = request.into_inner();
+
+        let chess_game = crate::services::game_service::resign(
+            &self.state,
+            &game_id,
+            &account_id,
+        ).await?;
+
+        Ok(tonic::Response::new(shared::ResignResponse {
+            game_repr: chess_game.to_string(),
+        }))
     }
 }
 

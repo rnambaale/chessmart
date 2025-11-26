@@ -17,6 +17,9 @@ pub enum GameServiceError {
     #[error("Game is already over")]
     GameOverError,
 
+    #[error("Unknown account id")]
+    UnknownAccountIdError,
+
     #[error("{0}")]
     UnexpectedError(String),
 

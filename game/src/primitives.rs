@@ -528,6 +528,29 @@ impl ChessGame {
             self.chess.fullmoves().get() as u64 >= MAX_MOVES ||
             self.resigned_color.is_some()
     }
+
+    pub fn resign(&mut self, account_id: &str) -> Result<(), GameServiceError> {
+        if self.is_game_over() {
+            return Err(GameServiceError::GameOverError);
+        }
+
+        let AccountIds { b, w } = self.account_ids.clone();
+        if [b.as_str(), w.as_str()].contains(&account_id) == false {
+            return Err(GameServiceError::UnknownAccountIdError);
+        }
+
+        let resigned_color = {
+            if account_id == b {
+                Some(ColorWrapper(Color::Black))
+            } else {
+                Some(ColorWrapper(Color::White))
+            }
+        };
+
+        self.resigned_color = resigned_color;
+
+        Ok(())
+    }
 }
 
 impl std::fmt::Display for ChessGame {

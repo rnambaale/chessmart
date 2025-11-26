@@ -177,3 +177,22 @@ pub async fn make_move(
 
     Ok(chess_game)
 }
+
+pub async fn resign(
+    state: &AppState,
+    game_id: &str,
+    account_id: &str,
+) -> Result<ChessGame, GameServiceError> {
+    let mut chess_game = get_game(state, game_id).await?;
+
+    let _ = chess_game.resign(account_id)?;
+
+    crate::repositories::game_repository::update_game(
+        state,
+        &chess_game
+    ).await?;
+
+    debug!("Game {}: {} resigned", game_id, account_id);
+
+    Ok(chess_game)
+}

@@ -35,7 +35,6 @@ impl Worker {
                             task.run();
                         },
                     }
-                    todo!()
                 }
                 None => {
                     info!("check_game_queue empty");
