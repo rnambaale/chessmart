@@ -1,14 +1,13 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use shared::error::BunnyChessApiError;
 use uuid::Uuid;
 
-use crate::{repositories::ranking_repository::RankingRepository};
+use crate::{error::MatchmakingServiceError, repositories::ranking_repository::RankingRepository};
 
  #[async_trait::async_trait]
 pub trait RankingServiceContract: Send + Sync {
-    async fn get_or_create_ranking(&self, account_id: &str) -> Result<Ranking, BunnyChessApiError>;
+    async fn get_or_create_ranking(&self, account_id: &str) -> Result<Ranking, MatchmakingServiceError>;
 }
 
 pub struct Ranking {
@@ -35,7 +34,7 @@ impl MyRankingService {
 
 #[async_trait::async_trait]
 impl RankingServiceContract for MyRankingService {
-    async fn get_or_create_ranking(&self, account_id: &str) -> Result<Ranking, BunnyChessApiError> {
+    async fn get_or_create_ranking(&self, account_id: &str) -> Result<Ranking, MatchmakingServiceError> {
         let record: Option<Ranking> = self.ranking_repository.find_ranking(account_id).await?;
 
         if let Some(ranking) = record {

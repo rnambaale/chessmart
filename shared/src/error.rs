@@ -17,10 +17,6 @@ pub enum BunnyChessApiError {
     #[error("{0}")]
     GameNotFoundError(String),
 
-
-    #[error("Invalid quote uuid {0}")]
-    InvalidUuid(#[from] uuid::Error),
-
     #[error("{0}")]
     InvalidInputError(String),
 

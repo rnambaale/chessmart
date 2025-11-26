@@ -12,6 +12,7 @@ mod config;
 mod state;
 mod repositories;
 mod client;
+mod error;
 
 pub struct MatchmakerGatewayService {
     matchmaking_queue_service: MatchmakingQueueService,

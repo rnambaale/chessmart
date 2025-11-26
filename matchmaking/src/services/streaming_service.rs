@@ -1,11 +1,11 @@
-use shared::{error::BunnyChessApiError, events::{MatchmakingEvent, PendingGameReadyEvent, PendingGameTimeoutEvent}};
+use shared::{events::{MatchmakingEvent, PendingGameReadyEvent, PendingGameTimeoutEvent}};
 
-use crate::state::state::AppState;
+use crate::{error::MatchmakingServiceError, state::state::AppState};
 
 pub async fn emit_pending_game_ready(
     state: &AppState,
     payload: PendingGameReadyEvent,
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), MatchmakingServiceError> {
     let event = MatchmakingEvent::PendingGameReady(payload.clone());
     let subject = event.subject();
 
@@ -23,7 +23,7 @@ pub async fn emit_pending_game_ready(
 pub async fn emit_pending_game_timeout(
     state: &AppState,
     payload: PendingGameTimeoutEvent,
-) -> Result<(), BunnyChessApiError> {
+) -> Result<(), MatchmakingServiceError> {
     let event = MatchmakingEvent::PendingGameTimeout(payload.clone());
     let subject = event.subject();
 

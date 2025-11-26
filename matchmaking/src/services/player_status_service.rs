@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use shared::{error::BunnyChessApiError, primitives::GameType};
+use shared::primitives::GameType;
 
-use crate::repositories::{matchmaking_queue_repository::PlayerStatus, player_status_repository::{PlayerStatusRepository}};
+use crate::{error::MatchmakingServiceError, repositories::{matchmaking_queue_repository::PlayerStatus, player_status_repository::PlayerStatusRepository}};
 
 // #[derive(Serialize, Deserialize)]
 pub struct MatchMakingStatus {
@@ -13,7 +13,7 @@ pub struct MatchMakingStatus {
 
 #[async_trait::async_trait]
 pub trait PlayerStatusServiceContract: Send + Sync {
-    async fn get_player_status(&self, account_id: &str) -> Result<MatchMakingStatus, BunnyChessApiError>;
+    async fn get_player_status(&self, account_id: &str) -> Result<MatchMakingStatus, MatchmakingServiceError>;
 }
 
 pub struct PlayerStatusService {
@@ -30,7 +30,7 @@ impl PlayerStatusService {
 
 #[async_trait::async_trait]
 impl PlayerStatusServiceContract for PlayerStatusService  {
-    async fn get_player_status(&self, account_id: &str) -> Result<MatchMakingStatus, BunnyChessApiError> {
+    async fn get_player_status(&self, account_id: &str) -> Result<MatchMakingStatus, MatchmakingServiceError> {
         self.player_status_repository.get_player_status(account_id).await
     }
 }

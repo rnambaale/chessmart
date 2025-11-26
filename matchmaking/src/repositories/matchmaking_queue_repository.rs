@@ -1,11 +1,11 @@
 use shared::QueueSize;
-use shared::error::BunnyChessApiError;
 use shared::primitives::GameType;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::error::MatchmakingServiceError;
 use crate::repositories::player_status_repository::PlayerStatusRepositoryService;
 
 pub enum PlayerStatus {
@@ -40,7 +40,7 @@ impl redis::ToRedisArgs for PlayerStatus {
 }
 
 impl FromStr for PlayerStatus {
-    type Err = BunnyChessApiError;
+    type Err = MatchmakingServiceError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -48,7 +48,7 @@ impl FromStr for PlayerStatus {
             "searching" => Ok(PlayerStatus::Searching),
             "pending" => Ok(PlayerStatus::Pending),
             "playing" => Ok(PlayerStatus::Playing),
-            _ => Err(BunnyChessApiError::UnknownGameTypeError(s.into())),
+            _ => Err(MatchmakingServiceError::UnknownGameTypeError(s.into())),
         }
     }
 }
@@ -96,7 +96,7 @@ pub trait MatchmakingQueueContract: Send + Sync {
     async fn get_queue_sizes(
         &self,
         queue_types: Vec<QueueType>,
-    ) -> Result<HashMap<String, QueueSize>, BunnyChessApiError>;
+    ) -> Result<HashMap<String, QueueSize>, MatchmakingServiceError>;
 }
 
 const MATCH_PLAYERS_SCRIPT: &str = include_str!("lua-scripts/match-players.lua");
@@ -238,7 +238,7 @@ impl MatchmakingQueueContract for RedisMatchmakingQueue {
     async fn get_queue_sizes(
         &self,
         queue_types: Vec<QueueType>,
-    ) -> Result<HashMap<String, QueueSize>, BunnyChessApiError> {
+    ) -> Result<HashMap<String, QueueSize>, MatchmakingServiceError> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
 
         let queue_keys: Vec<String> = queue_types.iter().map(| queue_type | {

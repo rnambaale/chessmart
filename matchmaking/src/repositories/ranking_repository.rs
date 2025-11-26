@@ -1,20 +1,19 @@
 use std::str::FromStr;
-use shared::error::BunnyChessApiError;
 use uuid::Uuid;
 
-use crate::{client::database::{Database, PostgresDB}, services::ranking_service::Ranking};
+use crate::{client::database::{Database, PostgresDB}, error::MatchmakingServiceError, services::ranking_service::Ranking};
 
 #[async_trait::async_trait]
 pub trait RankingRepository: Send + Sync {
     async fn find_ranking(
         &self,
         account_id: &str,
-    ) -> Result<Option<Ranking>, BunnyChessApiError>;
+    ) -> Result<Option<Ranking>, MatchmakingServiceError>;
 
     async fn insert_ranking(
         &self,
         ranking: &Ranking,
-    ) -> Result<(), BunnyChessApiError>;
+    ) -> Result<(), MatchmakingServiceError>;
 }
 
 pub struct RankingRepositoryService {
@@ -37,10 +36,10 @@ impl RankingRepository for RankingRepositoryService {
     async fn find_ranking(
         &self,
         account_id: &str
-    ) -> Result<Option<Ranking>, BunnyChessApiError> {
+    ) -> Result<Option<Ranking>, MatchmakingServiceError> {
         let mut tx = self.client.begin_tx()
             .await
-            .map_err(|e| BunnyChessApiError::Db(e))?;
+            .map_err(|e| MatchmakingServiceError::Db(e))?;
 
         let row = sqlx::query!(
             r#"
@@ -52,11 +51,11 @@ impl RankingRepository for RankingRepositoryService {
         )
         .fetch_optional(&mut *tx)
         .await
-        .map_err(|e| BunnyChessApiError::Db(e))?;
+        .map_err(|e| MatchmakingServiceError::Db(e))?;
 
         tx.commit()
             .await
-            .map_err(|e| BunnyChessApiError::Db(e))?;
+            .map_err(|e| MatchmakingServiceError::Db(e))?;
 
         if let Some(record) = row {
             return Ok(Some(Ranking {
@@ -74,7 +73,7 @@ impl RankingRepository for RankingRepositoryService {
     async fn insert_ranking(
         &self,
         ranking: &Ranking,
-    ) -> Result<(), BunnyChessApiError> {
+    ) -> Result<(), MatchmakingServiceError> {
         let mut tx = self.client.begin_tx()
             .await?;
 

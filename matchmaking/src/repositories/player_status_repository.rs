@@ -1,15 +1,14 @@
 use std::collections::HashMap;
 use redis::AsyncCommands;
-use shared::error::BunnyChessApiError;
 
-use crate::{repositories::matchmaking_queue_repository::PlayerStatus, services::player_status_service::MatchMakingStatus};
+use crate::{error::MatchmakingServiceError, repositories::matchmaking_queue_repository::PlayerStatus, services::player_status_service::MatchMakingStatus};
 
 #[async_trait::async_trait]
 pub trait PlayerStatusRepository: Send + Sync {
     async fn get_player_status(
         &self,
         account_id: &str,
-    ) -> Result<MatchMakingStatus, BunnyChessApiError>;
+    ) -> Result<MatchMakingStatus, MatchmakingServiceError>;
 }
 
 pub struct PlayerStatusRepositoryService {
@@ -50,13 +49,13 @@ impl PlayerStatusRepository for PlayerStatusRepositoryService {
     async fn get_player_status(
         &self,
         account_id: &str,
-    ) -> Result<MatchMakingStatus, BunnyChessApiError> {
+    ) -> Result<MatchMakingStatus, MatchmakingServiceError> {
         let account_status_key = Self::get_account_status_key(account_id);
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
 
         let data: HashMap<String, String> = conn.hgetall(&account_status_key).await
-            .map_err(|e| BunnyChessApiError::RedisError(e))?;
+            .map_err(|e| MatchmakingServiceError::RedisError(e))?;
 
         if data.is_empty() {
             Ok(MatchMakingStatus {
