@@ -93,9 +93,20 @@ impl shared::GameService for GameGatewayService {
 
     async fn make_move(
         &self,
-        _request: tonic::Request<shared::MakeMoveRequest>,
+        request: tonic::Request<shared::MakeMoveRequest>,
     ) -> Result<tonic::Response<shared::MakeMoveResponse>, tonic::Status> {
-        todo!()
+        let shared::MakeMoveRequest { game_id, r#move,  account_id } = request.into_inner();
+
+        let chess_game = crate::services::game_service::make_move(
+            &self.state,
+            &game_id,
+            &account_id,
+            &r#move,
+        ).await?;
+
+        Ok(tonic::Response::new(shared::MakeMoveResponse {
+            game_repr: chess_game.to_string(),
+        }))
     }
 
     async fn resign(

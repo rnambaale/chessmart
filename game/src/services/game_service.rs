@@ -1,5 +1,5 @@
 use rand::{seq::SliceRandom, thread_rng};
-use shared::{error::BunnyChessApiError, events::{GameOverEvent, GameStartEvent}};
+use shared::{error::BunnyChessApiError, events::{GameOverEvent, GameStartEvent, GameStateUpdateEvent}};
 use tracing::debug;
 
 use crate::{jobs::{TaskMessage, TaskType, check_game_job::CheckGamePayload}, primitives::{AccountIds, ChessGame, CreateGameDto}, state::state::AppState};
@@ -143,4 +143,37 @@ async fn remove_game_from_check_queue(state: &AppState, chess_game: &ChessGame) 
         .arg(serialized_message.clone())
         .query(&mut conn)?;
     Ok(())
+}
+
+pub async fn make_move(
+    state: &AppState,
+    game_id: &str,
+    account_id: &str,
+    game_move: &str,
+) -> Result<ChessGame, BunnyChessApiError> {
+    let chess_game = get_game(state, game_id).await?;
+    let _ = chess_game.make_move(account_id, game_move)?;
+
+    crate::repositories::game_repository::update_game(
+        state,
+        &chess_game
+    ).await?;
+
+    crate::services::streaming_service::emit_game_state_update(
+        state,
+        GameStateUpdateEvent {
+            account_id: account_id.to_string(),
+            r#move: game_move.to_owned(),
+            game_id: chess_game.id.to_owned(),
+            // fen: chess_game.fen,
+            seq: chess_game.seq(),
+            clocks: shared::events::ClockState { w: chess_game.game_clocks.w as u32, b: chess_game.game_clocks.b as u32 }
+        }
+    ).await?;
+
+    check_game_result(state, &chess_game).await?;
+
+    debug!("Game {}: move '{}' by {}", game_id, game_move, account_id);
+
+    Ok(chess_game)
 }

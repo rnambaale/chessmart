@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use shakmaty::{Chess, Color, Position};
+use shakmaty::{Chess, Color, Move, Position, san::San};
 use shared::{error::BunnyChessApiError, primitives::GameType};
 use std::str::FromStr;
 
@@ -29,8 +29,8 @@ impl GameRules {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameClocks {
-    w: u64,
-    b: u64,
+    pub w: u64,
+    pub b: u64,
     start_timestamp: DateTime<Utc>,
     last_move_timestamp: Option<i32>,
 }
@@ -489,6 +489,42 @@ impl ChessGame {
             Color::Black => Color::White,
             Color::White => Color::Black,
         }
+    }
+
+    pub fn make_move(&self, account_id: &str, game_move: &str) -> Result<(Chess, Move), BunnyChessApiError> {
+        let turn = self.chess.turn();
+
+        if self.is_game_over() {
+            return Err(BunnyChessApiError::GameOverError("Game is already over".into()));
+        }
+
+        let AccountIds { b, w } = self.account_ids.clone();
+
+        let turn_account = match turn {
+            Color::Black => b,
+            Color::White => w,
+        };
+
+        if account_id != turn_account {
+            return Err(BunnyChessApiError::TurnError("Wrong turn".into()));
+        }
+
+        let san: San = game_move.parse()
+            .map_err(|e: shakmaty::san::ParseSanError| BunnyChessApiError::UnexpectedError(e.to_string()))?;
+        let game_move = san.to_move(&self.chess)
+            .map_err(|e| BunnyChessApiError::UnexpectedError(e.to_string()))?;
+
+        let new_position = self.chess.clone().play(&game_move)
+            .map_err(|e| BunnyChessApiError::UnexpectedError(e.to_string()))?;
+        Ok((new_position, game_move))
+    }
+
+    fn is_game_over(&self) -> bool {
+        self.chess.is_game_over() ||
+            self.game_clocks.w == 0 ||
+            self.game_clocks.b == 0 ||
+            self.chess.fullmoves().get() as u64 >= MAX_MOVES ||
+            self.resigned_color.is_some()
     }
 }
 

@@ -3,7 +3,7 @@ use shared::error::BunnyChessApiError;
 
 use crate::{primitives::ChessGame, state::state::AppState};
 
-// const UPDATE_GAME_SCRIPT: &str = include_str!("lua-scripts/update-game.lua");
+const UPDATE_GAME_SCRIPT: &str = include_str!("lua-scripts/update-game.lua");
 
 pub async fn store_game(
     state: &AppState,
@@ -60,4 +60,34 @@ pub async fn delete_game(
     let result: () = connection.del(&game_key).await?;
 
     Ok(result)
+}
+
+pub async fn update_game(
+    state: &AppState,
+    chess_game: &ChessGame
+) -> Result<(), BunnyChessApiError> {
+    let game_key = get_game_key(chess_game.id.as_str());
+
+    let mut connection = state.redis.get_multiplexed_async_connection().await?;
+
+    let game_state = chess_game.to_string();
+
+    let script = redis::Script::new(UPDATE_GAME_SCRIPT);
+    let result: i32 = script
+        .key(&game_key)
+        .arg(&game_state)
+        .arg(chess_game.seq())
+        .invoke_async(&mut connection)
+        .await
+        .map_err(|e| BunnyChessApiError::RedisError(e))?;
+
+    match result {
+        1 => Ok(()),
+        0 => Err(BunnyChessApiError::ConcurrentMoveError(
+            format!("Trying to update game {} with same seq number", chess_game.id)
+        )),
+        _ => Err(BunnyChessApiError::UnexpectedError(
+            "Unexpected return value from Lua script".to_string()
+        )),
+    }
 }

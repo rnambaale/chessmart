@@ -12,7 +12,7 @@ pub struct GameStateUpdateEvent {
     pub account_id: String,
     pub game_id: String,
     pub r#move: String,
-    pub fen: String,
+    // pub fen: String,
     pub seq: u64,
     pub clocks: ClockState,
 }
