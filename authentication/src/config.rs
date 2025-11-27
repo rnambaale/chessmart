@@ -57,7 +57,7 @@ impl Default for RedisConfig {
     fn default() -> Self {
         Self {
             username: "".to_owned(),
-            password: "".to_owned(),
+            password: "password".to_owned(),
             port: 6379,
             host: "127.0.0.1".to_owned(),
             database_name: "".to_owned(),
