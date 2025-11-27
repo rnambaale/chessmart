@@ -106,7 +106,7 @@ impl<'de> Deserialize<'de> for ColorWrapper {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonRepr {
     pub id: String,
-    pub pgn: String,
+    // pub pgn: String,
     pub game_type: String,
     pub account_ids: AccountIds,
     pub metadata: String,
@@ -219,43 +219,9 @@ impl ChessGame {
         )
     }
 
-    // Getters
-    // pub fn id(&self) -> &str {
-    //     &self.id
-    // }
-
-    // pub fn chess(&self) -> &Chess {
-    //     &self.chess
-    // }
-
-    // pub fn account_ids(&self) -> &AccountIds {
-    //     &self.account_ids
-    // }
-
-    // pub fn game_rules(&self) -> &GameRules {
-    //     &self.game_rules
-    // }
-
-    // pub fn game_clocks(&self) -> &GameClocks {
-    //     &self.game_clocks
-    // }
-
-    // pub fn resigned_color(&self) -> Option<ColorWrapper> {
-    //     self.resigned_color
-    // }
-
     pub fn seq(&self) -> u64 {
         self.chess.fullmoves().get() as u64
     }
-
-    // Setters
-    // pub fn set_resigned_color(&mut self, color: ColorWrapper) {
-    //     self.resigned_color = Some(color);
-    // }
-
-    // pub fn update_game_clocks(&mut self, new_clocks: GameClocks) {
-    //     self.game_clocks = new_clocks;
-    // }
 
     pub fn to_json(&self) -> Result<String, serde_json::Error> {
         // Always update the clocks before serializing the game
@@ -263,7 +229,7 @@ impl ChessGame {
 
         let json_repr = JsonRepr {
             id: self.id.clone(),
-            pgn: self.get_pgn(),
+            // pgn: self.get_pgn(),
             game_type: self.game_type.to_str().to_owned(),
             account_ids: self.account_ids.clone(),
             metadata: self.metadata.clone(),
@@ -310,16 +276,16 @@ impl ChessGame {
     //     todo!()
     // }
 
-    fn get_pgn(&self) -> String {
-        // Example implementation - adjust based on your needs
-        // let mut builder = shakmaty::pgn::PgnBuilder::new();
-        // Add moves, headers, etc. to the builder
-        // builder.header("White", &self.account_ids.white);
-        // builder.header("Black", &self.account_ids.black);
-        // ...
-        // builder.finish()
-        todo!()
-    }
+    // fn get_pgn(&self) -> String {
+    //     // Example implementation - adjust based on your needs
+    //     // let mut builder = shakmaty::pgn::PgnBuilder::new();
+    //     // Add moves, headers, etc. to the builder
+    //     // builder.header("White", &self.account_ids.white);
+    //     // builder.header("Black", &self.account_ids.black);
+    //     // ...
+    //     // builder.finish()
+    //     todo!()
+    // }
 
     fn update_clock(&mut self) {
         let turn_color = self.chess.turn();
