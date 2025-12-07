@@ -56,7 +56,7 @@ fn init_tracing(tr: Option<TracingConfig>) -> anyhow::Result<()> {
                     .with_sampler(Sampler::AlwaysOn)
                     .with_resource(opentelemetry_sdk::Resource::new(vec![KeyValue::new(
                         "service.name",
-                        "bunny-chess",
+                        "chess-mart",
                     )])),
             )
             .install_batch(opentelemetry_sdk::runtime::Tokio)?;

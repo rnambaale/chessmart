@@ -244,7 +244,7 @@ fn init_tracing(tr: Option<TracingConfig>) -> anyhow::Result<()> {
                     .with_sampler(opentelemetry_sdk::trace::Sampler::AlwaysOn)
                     .with_resource(opentelemetry_sdk::Resource::new(vec![opentelemetry::KeyValue::new(
                         "service.name",
-                        "bunny-chess matchmaker",
+                        "chess-mart matchmaker",
                     )])),
             )
             .install_batch(opentelemetry_sdk::runtime::Tokio)?;
