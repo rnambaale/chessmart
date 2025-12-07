@@ -15,7 +15,7 @@ pub async fn game_consumer(state: Arc<AppState>, socket_io: Arc<SocketIo>) -> Re
     let consumer: PullConsumer = jetstream
         .create_stream(jetstream::stream::Config {
             name: stream_name,
-            subjects: vec!["bunnychess.game.>".into()],
+            subjects: vec!["chessmart.game.>".into()],
             ..Default::default()
         })
         .await?

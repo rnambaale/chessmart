@@ -45,7 +45,7 @@ where
   Ok(())
 }
 
-// pub async fn hset<K>(client: &RedisClient, key: &K, value: &PlayerStatusUpdate) -> Result<(), BunnyChessApiError>
+// pub async fn hset<K>(client: &RedisClient, key: &K, value: &PlayerStatusUpdate) -> Result<(), ChessmartApiError>
 // where
 //   K: RedisKey,
 // {
@@ -73,7 +73,7 @@ where
   )
 }
 
-// pub async fn hgetall<K>(client: &RedisClient, key: &K) -> Result<Option<HashMap<String, String>>, BunnyChessApiError>
+// pub async fn hgetall<K>(client: &RedisClient, key: &K) -> Result<Option<HashMap<String, String>>, ChessmartApiError>
 // where
 //   K: RedisKey,
 // {

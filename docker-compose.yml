@@ -1,4 +1,4 @@
-name: bunnychess_rs
+name: chessmart_rs
 
 services:
   postgres-auth:

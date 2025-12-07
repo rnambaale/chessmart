@@ -1,7 +1,7 @@
 
 use std::sync::Arc;
 
-use shared::error::BunnyChessApiError;
+use shared::error::ChessmartApiError;
 
 use crate::{client::{database::{Database, PostgresDB}, redis::{RedisClient, RedisDB}}, config::{ApiConfig, DatabaseConfig, RedisConfig, ServerConfig, TokenSecretConfig, TracingConfig}};
 
@@ -74,7 +74,7 @@ impl AppStateBuilder {
         self
     }
 
-    pub async fn build(self) -> Result<AppState<PostgresDB>, BunnyChessApiError> {
+    pub async fn build(self) -> Result<AppState<PostgresDB>, ChessmartApiError> {
         let db_config = self.db_config.expect("db-config not set");
         let db = PostgresDB::new(&db_config).await?;
         db.migrate().await;

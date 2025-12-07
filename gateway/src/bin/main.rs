@@ -1,6 +1,6 @@
 use std::env;
 
-use bunnychess::{config::{ApiConfig, TracingConfig}, server::state::AppStateBuilder};
+use chessmart::{config::{ApiConfig, TracingConfig}, server::state::AppStateBuilder};
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::trace::Sampler;
@@ -37,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
         .build()
         .await?;
 
-    bunnychess::server::run_server(state).await
+    chessmart::server::run_server(state).await
 }
 
 fn init_tracing(tr: Option<TracingConfig>) -> anyhow::Result<()> {

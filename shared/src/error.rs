@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum BunnyChessApiError {
+pub enum ChessmartApiError {
     #[error("DB Error {0}")]
     Db(#[from] sqlx::Error),
 
@@ -24,16 +24,16 @@ pub enum BunnyChessApiError {
     GrpcError(String),
 }
 
-impl From<BunnyChessApiError> for tonic::Status {
-    fn from(error: BunnyChessApiError) -> Self {
+impl From<ChessmartApiError> for tonic::Status {
+    fn from(error: ChessmartApiError) -> Self {
         tonic::Status::invalid_argument(error.to_string())
     }
 }
 
-impl From<tonic::transport::Error> for BunnyChessApiError {
+impl From<tonic::transport::Error> for ChessmartApiError {
     fn from(error: tonic::transport::Error) -> Self {
         eprintln!("gRPC error: {}", error);
-        BunnyChessApiError::GrpcError(error.to_string())
+        ChessmartApiError::GrpcError(error.to_string())
     }
 }
 

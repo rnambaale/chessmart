@@ -1,4 +1,4 @@
-use shared::error::BunnyChessApiError;
+use shared::error::ChessmartApiError;
 use tracing::info;
 
 use crate::{jobs::TaskMessage, state::state::AppState};
@@ -13,7 +13,7 @@ impl Worker {
         Self { state }
     }
 
-    pub async fn run(self) -> Result<(), BunnyChessApiError> {
+    pub async fn run(self) -> Result<(), ChessmartApiError> {
         println!("The game task worker started.");
 
         loop {

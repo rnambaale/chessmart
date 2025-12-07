@@ -1,4 +1,4 @@
-use shared::{GameServiceServer, error::BunnyChessApiError};
+use shared::{GameServiceServer, error::ChessmartApiError};
 use tonic::transport::Server;
 
 use crate::{GameGatewayService, state::state::AppState};
@@ -15,7 +15,7 @@ impl AppServer {
         Self { state }
     }
 
-    pub async fn run(self) -> Result<(), BunnyChessApiError> {
+    pub async fn run(self) -> Result<(), ChessmartApiError> {
         let addr = self.state.config.server.host_port;
 
         println!("GameService gRPC server running on {}", addr);

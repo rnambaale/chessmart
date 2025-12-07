@@ -1,12 +1,12 @@
-use shared::error::BunnyChessApiError;
+use shared::error::ChessmartApiError;
 use tracing::error;
 
 /// If a task is fail fast after encounter an error node goes down.
 pub type IsFailFast = bool;
-pub type Task = (IsFailFast, futures::future::BoxFuture<'static, Result<(), BunnyChessApiError>>);
+pub type Task = (IsFailFast, futures::future::BoxFuture<'static, Result<(), ChessmartApiError>>);
 
-pub async fn join_all(tasks: Vec<Task>) -> Result<(), BunnyChessApiError> {
-  let (sender, mut receiver) = tokio::sync::mpsc::channel::<BunnyChessApiError>(1);
+pub async fn join_all(tasks: Vec<Task>) -> Result<(), ChessmartApiError> {
+  let (sender, mut receiver) = tokio::sync::mpsc::channel::<ChessmartApiError>(1);
   for (is_fail_fast, task) in tasks {
     let sender = if is_fail_fast {
       Some(sender.clone())

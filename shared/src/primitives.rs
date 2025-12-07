@@ -4,7 +4,7 @@ use redis::ToRedisArgs;
 use serde::{Deserialize, Serialize};
 use prost_types::Timestamp;
 
-use crate::error::BunnyChessApiError;
+use crate::error::ChessmartApiError;
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum GameType {
@@ -30,7 +30,7 @@ impl GameType {
 }
 
 impl FromStr for GameType {
-    type Err = BunnyChessApiError;
+    type Err = ChessmartApiError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -40,7 +40,7 @@ impl FromStr for GameType {
             "Blitz3_2" => Ok(GameType::Blitz3_2),
             "Blitz3_0" => Ok(GameType::Blitz3_0),
             "Bullet1_0" => Ok(GameType::Bullet1_0),
-            _ => Err(BunnyChessApiError::UnknownGameTypeError(s.into())),
+            _ => Err(ChessmartApiError::UnknownGameTypeError(s.into())),
         }
     }
 }

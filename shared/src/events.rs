@@ -45,9 +45,9 @@ pub enum GameEvent {
 impl GameEvent {
     pub fn subject(&self) -> &'static str {
         match self {
-            GameEvent::GameStart(_) => "bunnychess.game.game-start",
-            GameEvent::GameStateUpdate(_) => "bunnychess.game.game-state-update",
-            GameEvent::GameOver(_) => "bunnychess.game.game-over",
+            GameEvent::GameStart(_) => "chessmart.game.game-start",
+            GameEvent::GameStateUpdate(_) => "chessmart.game.game-state-update",
+            GameEvent::GameOver(_) => "chessmart.game.game-over",
         }
     }
 }
@@ -84,9 +84,9 @@ pub enum MatchmakingEvent {
 impl MatchmakingEvent {
     pub fn subject(&self) -> &'static str {
         match self {
-            MatchmakingEvent::PendingGameReady(_) => "bunnychess.matchmaking.pending-game-ready",
-            MatchmakingEvent::PendingGameTimeout(_) => "bunnychess.matchmaking.pending-game-timeout",
-            MatchmakingEvent::EloChange(_) => "bunnychess.matchmaking.elo-change",
+            MatchmakingEvent::PendingGameReady(_) => "chessmart.matchmaking.pending-game-ready",
+            MatchmakingEvent::PendingGameTimeout(_) => "chessmart.matchmaking.pending-game-timeout",
+            MatchmakingEvent::EloChange(_) => "chessmart.matchmaking.elo-change",
         }
     }
 }

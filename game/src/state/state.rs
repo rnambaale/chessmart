@@ -1,7 +1,7 @@
 
 use std::sync::Arc;
 
-use shared::error::BunnyChessApiError;
+use shared::error::ChessmartApiError;
 
 use crate::{client::{nats::{NatsDB, NatsJetstreamContext}, redis::{RedisClient, RedisDB}}, config::{ApiConfig, NatsConfig, RedisConfig, ServerConfig, TracingConfig}};
 
@@ -65,7 +65,7 @@ impl AppStateBuilder {
         self
     }
 
-    pub async fn build(self) -> Result<AppState, BunnyChessApiError> {
+    pub async fn build(self) -> Result<AppState, ChessmartApiError> {
         let redis_config = self.redis_config.expect("redis-config not set");
         let redis = RedisDB::new(&redis_config).await?;
 

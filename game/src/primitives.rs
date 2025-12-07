@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use shakmaty::{Chess, Color, Move, Position, san::San};
-use shared::{error::BunnyChessApiError, primitives::GameType};
+use shared::{error::ChessmartApiError, primitives::GameType};
 use std::str::FromStr;
 
 use crate::error::GameServiceError;
@@ -258,7 +258,7 @@ impl ChessGame {
             resigned_color, ..} = json_repr;
         Ok(Self {
             id,
-            game_type: GameType::from_str(&game_type).map_err(|e: BunnyChessApiError| GameServiceError::UnknownGameTypeError(e.to_string()) )?,
+            game_type: GameType::from_str(&game_type).map_err(|e: ChessmartApiError| GameServiceError::UnknownGameTypeError(e.to_string()) )?,
             account_ids,
             chess: Chess::new(),
             metadata,

@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "bunny-chess"
+name = "chess-mart"
 path = "src/bin/main.rs"
 
 [lib]
-name = "bunnychess"
+name = "chessmart"
 path = "src/lib.rs"
 
 [dependencies]
