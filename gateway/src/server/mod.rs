@@ -15,9 +15,11 @@ use crate::{ dtos::{request::{LoginRequestDto, RefreshTokenRequestDto, RegisterR
 
 pub async fn run_server(state: AppState) -> anyhow::Result<()> {
 
-    info!("listening on: 3000");
+    let addr = state.config.server.host_port;
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    info!("listening on: {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
 
