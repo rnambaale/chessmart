@@ -45,6 +45,108 @@ services:
     volumes:
       - nats_data:/data/js
 
+  authentication:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      RUST_LOG: debug
+      DATABASE_URL: postgres://postgres:password@postgres-auth:5432/auth_db
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - ./authentication/.env
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgres-auth
+      - redis
+    volumes:
+      - .:/project
+      - cargo-cache:/usr/local/cargo/registry
+    working_dir: /project
+    # command: ["cargo", "watch", "-x", "run", "-p", "authentication"]
+    entrypoint: ["/entrypoint.sh"]
+
+  matchmaking:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      RUST_LOG: debug
+      DATABASE_URL: postgres://postgres:password@postgres-matchmaking:5432/matchmaking_db
+      REDIS_URL: redis://redis:6379
+      REDIS_PASSWORD: password
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+    env_file:
+      - ./matchmaking/.env
+    ports:
+      - "50052:50052"
+    depends_on:
+      - postgres-matchmaking
+      - redis
+    volumes:
+      - .:/project
+      - cargo-cache:/usr/local/cargo/registry
+    working_dir: /project
+    # command: ["cargo", "watch", "-x", "run", "-p", "matchmaking"]
+    entrypoint: ["/entrypoint.sh"]
+
+  game:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      RUST_LOG: debug
+      NATS_URL: nats://nats:4222
+      NATS_USER: nats
+      NATS_PASSWORD: password
+
+      REDIS_URL: redis://redis:6379
+      REDIS_PASSWORD: password
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+    env_file:
+      - ./game/.env
+    ports:
+      - "50053:50053"
+    depends_on:
+      - nats
+      - redis
+    volumes:
+      - .:/project
+      - cargo-cache:/usr/local/cargo/registry
+    working_dir: /project
+    # command: ["cargo", "watch", "-x", "run", "-p", "game"]
+    entrypoint: ["/entrypoint.sh"]
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      RUST_LOG: debug
+
+      REDIS_URL: redis://redis:6379
+      REDIS_PASSWORD: password
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+    env_file:
+      - ./gateway/.env
+    ports:
+      - "3338:3338"
+    depends_on:
+      - authentication
+      - matchmaking
+      - game
+      - redis
+    volumes:
+      - .:/project
+      - cargo-cache:/usr/local/cargo/registry
+    working_dir: /project
+    # command: ["cargo", "run", "-p", "gateway"]
+    entrypoint: ["/entrypoint.sh"]
+
 volumes:
   postgres_auth_data:
   postgres_matchmaking_data:

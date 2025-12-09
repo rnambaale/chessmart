@@ -1,0 +1,33 @@
+FROM rust:1.84-alpine AS development
+
+# Install required system dependencies
+RUN apk add --no-cache \
+    protoc \
+    protobuf-dev \
+    pkgconfig \
+    openssl-dev \
+    musl-dev \
+    postgresql-client
+
+# Create working directory
+WORKDIR /project
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Copy the entire project
+COPY . .
+
+# Pre-download dependencies to speed up subsequent builds
+RUN cargo fetch
+
+# Set development environment variables
+ENV RUST_LOG=debug
+ENV RUST_BACKTRACE=1
+ENV CARGO_TARGET_DIR=/project/target
+
+# Create target directory with proper permissions
+RUN mkdir -p target && chmod -R 777 target
+
+# Default command (can be overridden in docker-compose)
+CMD ["cargo", "run"]
